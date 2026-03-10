@@ -1,3 +1,13 @@
+<div align="center">
+  <img src="https://img.shields.io/badge/SHOPEE-FLASH%20BOT-orange?style=for-the-badge&logo=shopee&logoColor=white"/>
+  
+  <p>Automated Shopee Flash Sale bot that fires concurrent checkout requests at T=0 with NTP time synchronisation.</p>
+
+  <img src="https://img.shields.io/github/stars/Auto-runs/Shopee-FlashBot?style=flat-square"/>
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square"/>
+  <img src="https://img.shields.io/badge/python-3.11+-blue?style=flat-square"/>
+</div>
+
 # ⚡ Shopee Flash Sale Bot
 
 Bot otomatis untuk checkout item flash sale Shopee tepat di T=0 menggunakan concurrent requests dan NTP time synchronisation.
