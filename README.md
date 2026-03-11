@@ -55,7 +55,7 @@ shopee_botflash/
 ### 1. Clone & Install dependencies
 
 ```bash
-git clone https://github.com/username/shopee_botflash.git
+git clone https://github.com/Auto-runs/shopee_Botflash.git
 cd shopee_botflash
 python -m venv venv
 venv\Scripts\activate        # Windows
@@ -139,8 +139,6 @@ Bot akan otomatis:
 - **Jangan tutup terminal** selama bot berjalan
 - **Sync jam Windows** sebelum menjalankan: `w32tm /resync /force` (Run as Admin)
 - **Export ulang cookies** setiap kali session expired
-- File `.env` dan `sessions/` **tidak boleh di-commit** ke GitHub
-
 ---
 
 ## 📋 Environment Variables
