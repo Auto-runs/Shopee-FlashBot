@@ -340,6 +340,12 @@ main {
   overflow-wrap: anywhere;
 }
 
+.history-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
 .history-item details {
   margin-top: 8px;
 }

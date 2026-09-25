@@ -1,0 +1,14 @@
+name: Usulan fitur
+description: Ide untuk membuat FlashBot lebih berguna.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Masalah apa yang ingin diselesaikan?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Usulan solusi

@@ -305,10 +305,35 @@ function renderHistory() {
         h('div', { class: 'muted small' }, FB.formatDateTime(run.finishedAt || run.startedAt)),
         run.notifyError ? h('div', { class: 'small', style: 'color:var(--bad)' }, 'Notifikasi gagal: ' + run.notifyError) : null,
         steps.length ? h('details', {}, h('summary', { text: 'Detail langkah (' + steps.length + ')' }), h('ol', { class: 'steps' }, steps)) : null,
+        h(
+          'div',
+          { class: 'history-actions' },
+          h('button', { class: 'btn sm', type: 'button', text: 'Salin laporan', onclick: () => copyReport(run) }),
+          run.status !== 'success' && run.status !== 'dry_run_ok'
+            ? h('a', { class: 'btn sm ghost', href: ISSUE_URL, target: '_blank', rel: 'noopener', text: 'Laporkan masalah' })
+            : null,
+        ),
       ),
     );
   }
   $('#history-empty').hidden = state.runs.length > 0;
+}
+
+const ISSUE_URL = 'https://github.com/Auto-runs/Shopee-FlashBot/issues/new?template=bug_report.yml';
+
+function browserLabel() {
+  const m = navigator.userAgent.match(/Chrome\/(\d+)/);
+  return (m ? 'Chrome ' + m[1] : 'Chromium') + ' · ' + (navigator.platform || '-');
+}
+
+async function copyReport(run) {
+  const text = FB.buildRunReport(run, { version: chrome.runtime.getManifest().version, browser: browserLabel() });
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Laporan disalin. Tempel di GitHub Issue.', 'good');
+  } catch (_) {
+    toast('Gagal menyalin ke clipboard.', 'bad');
+  }
 }
 
 function renderAll() {

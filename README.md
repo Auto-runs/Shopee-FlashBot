@@ -1,164 +1,93 @@
 <div align="center">
-  <img src="extension/icons/icon128.png" width="72" alt="" />
+  <img src="extension/icons/icon128.png" width="64" alt="" />
 
 # FlashBot Checkout
 
-Chrome extension untuk **checkout otomatis flash sale Shopee Indonesia tepat waktu**,
+Chrome extension open source untuk checkout otomatis flash sale Shopee Indonesia tepat waktu,
 langsung dari browser dan akun Shopee kamu sendiri.
 
-<img src="https://img.shields.io/badge/Chrome-Manifest%20V3-orange?style=flat-square"/>
-<img src="https://img.shields.io/badge/license-MIT-green?style=flat-square"/>
+[Unduh versi terbaru](../../releases/latest) · [Laporkan masalah](../../issues/new?template=bug_report.yml) · [Berkontribusi](CONTRIBUTING.md)
 
 </div>
 
----
+<p align="center">
+  <img src="docs/screenshots/2-daftar-task.png" width="720" alt="Daftar task FlashBot dengan hitung mundur" />
+</p>
 
-## ✨ Fitur
+## Apa yang dilakukan
 
-- 🕐 **Tepat T=0 menurut jam server Shopee.** Selisih jam komputer dihitung otomatis dari server, jadi jam komputer yang meleset tidak masalah.
-- 🛒 **Alur beli lengkap.** Pilih varian → atur jumlah → **Beli Sekarang** → **Checkout** → pilih metode pembayaran → **Buat Pesanan**.
-- 🧪 **Mode uji coba & tombol "Uji sekarang".** Jalankan semua langkah di akunmu kapan saja, berhenti tepat sebelum "Buat Pesanan".
-- 🛡️ **Pengaman:**
-  - **Harga maksimal**: batal kalau total melebihi batas.
-  - **Tidak membeli di harga normal** bila flash sale belum mulai.
-  - **"Buat Pesanan" tidak pernah diklik dua kali.**
-- 📋 **Banyak task sekaligus.** Beberapa produk dan jadwal, masing-masing di tab sendiri.
-- 📲 **Notifikasi Telegram** saat bot siap, berhasil, gagal, atau jadwal terlewat.
-- ⚙️ **Tampilan pengaturan lengkap**, plus riwayat dengan detail tiap langkah (sampai milidetik).
-- 🔧 **Tahan perubahan tampilan Shopee.** Tombol dicari berdasarkan teksnya; teks bisa diubah dari halaman pengaturan tanpa update kode.
-- 🔒 **Aman:** tidak ada password atau cookie yang disalin atau dikirim ke mana pun. Semua berjalan di browser pengguna.
+Kamu mengisi link produk dan jam flash sale. Menjelang waktunya, FlashBot membuka halaman produk, lalu tepat saat flash sale dimulai memuat ulang halaman dan mengklik tombol yang sama seperti yang akan kamu klik:
+pilih varian, atur jumlah, **Beli Sekarang**, **Checkout**, pilih pembayaran, lalu **Buat Pesanan**.
 
-## 🖼️ Tampilan
+- **Waktu mengikuti jam server Shopee**, bukan jam komputer. Selisihnya dihitung otomatis.
+- **Mode uji coba dan tombol Uji sekarang** menjalankan semua langkah tapi berhenti sebelum Buat Pesanan.
+- **Pengaman:**
+  - batal kalau total melebihi harga maksimal
+  - tidak membeli kalau flash sale ternyata belum mulai
+  - Buat Pesanan tidak pernah diklik dua kali
+- **Beberapa task** bisa berjalan bersamaan di tab terpisah.
+- **Notifikasi Telegram** saat bot siap, berhasil, atau gagal.
+- **Riwayat** mencatat setiap langkah sampai milidetik dan bisa disalin sebagai laporan.
+- **Teks tombol bisa diubah** dari pengaturan kalau tampilan Shopee berubah, tanpa menunggu update.
 
-<table>
-  <tr>
-    <td width="50%"><b>Daftar task</b><br/><img src="docs/screenshots/2-daftar-task.png" alt="Daftar task terjadwal dengan hitung mundur"/></td>
-    <td width="50%"><b>Tambah / edit task</b><br/><img src="docs/screenshots/1-form-task.png" alt="Form task: link produk, waktu, varian, jumlah, harga maksimal, pembayaran, mode uji coba"/></td>
-  </tr>
-  <tr>
-    <td><b>Riwayat & detail langkah</b><br/><img src="docs/screenshots/5-riwayat.png" alt="Riwayat percobaan dengan detail tiap langkah sampai milidetik"/></td>
-    <td><b>Notifikasi Telegram</b><br/><img src="docs/screenshots/3-notifikasi.png" alt="Pengaturan notifikasi Telegram dengan deteksi Chat ID otomatis"/></td>
-  </tr>
-  <tr>
-    <td><b>Pengaturan lanjutan</b><br/><img src="docs/screenshots/4-lanjutan.png" alt="Pengaturan waktu, sinkron jam server Shopee, dan teks tombol"/></td>
-    <td><b>Popup toolbar</b><br/><img src="docs/screenshots/6-popup.png" width="300" alt="Popup: jadwal berikutnya dan hasil terakhir"/></td>
-  </tr>
-</table>
+FlashBot tidak meminta password dan tidak menyalin cookie. Semua data tersimpan di browser kamu ([detail](SECURITY.md)).
 
-<sub>Tangkapan layar dibuat otomatis oleh test end-to-end: <code>FLASHBOT_SCREENSHOTS=docs/screenshots npm run test:e2e</code>.</sub>
+## Pasang
 
-## 📦 Cara pasang (untuk pengguna)
+1. Unduh `flashbot-checkout-v*.zip` dari [Releases](../../releases/latest), lalu ekstrak ke folder yang tidak akan dihapus.
+2. Buka `chrome://extensions`, aktifkan **Developer mode** (kanan atas).
+3. Klik **Load unpacked**, pilih folder hasil ekstrak.
 
-1. Ekstrak file `flashbot-checkout-v1.0.0.zip` ke sebuah folder (jangan dihapus setelah dipasang).
-2. Buka Chrome → ketik `chrome://extensions` di address bar.
-3. Aktifkan **Developer mode** (pojok kanan atas).
-4. Klik **Load unpacked** → pilih folder hasil ekstrak.
-5. Halaman pengaturan FlashBot terbuka otomatis. Pin ikon ⚡ di toolbar supaya mudah diakses.
+Untuk update: ekstrak versi baru ke folder yang sama, lalu klik ikon muat ulang di kartu FlashBot pada `chrome://extensions`. Task dan pengaturan tetap tersimpan.
 
-## ▶️ Cara pakai
+## Pakai
 
-1. **Login Shopee** di Chrome yang sama, lalu pastikan **alamat utama** sudah benar.
-2. Buka FlashBot → **+ Tambah task** → isi:
-   - link produk
-   - jam flash sale
-   - varian (opsional)
-   - jumlah
-   - harga maksimal (disarankan)
-   - metode pembayaran (opsional)
-3. Klik **Uji sekarang**. Bot membuka tab baru dan menjalankan semua langkah tanpa membuat pesanan. Cek hasilnya di tab **Riwayat**.
-4. Kalau uji coba berhasil: **Edit** task → matikan **Mode uji coba** → Simpan.
-5. Biarkan komputer menyala dan Chrome terbuka. Sekitar 60 detik sebelum flash sale, bot membuka tab produk. Tepat di T=0 halaman dimuat ulang dan pembelian berjalan otomatis.
-6. Setelah berhasil, selesaikan pembayaran di tab Shopee.
+1. Login Shopee di Chrome yang sama dan pastikan alamat utama benar.
+2. Buka FlashBot → **Tambah task**. Isi link produk, jam flash sale, dan sebaiknya **harga maksimal**. Varian, jumlah, dan metode pembayaran opsional.
+3. Klik **Uji sekarang**. Cek hasilnya di tab **Riwayat**.
+4. Kalau uji coba berhasil, edit task dan matikan **Mode uji coba**.
+5. Biarkan komputer menyala dan Chrome terbuka sampai flash sale selesai.
 
-**Tips**
-- Metode pembayaran bertingkat ditulis dengan `>`, misalnya `Transfer Bank > Bank BCA` atau `Ubah > ShopeePay`.
-- Kosongkan item lain yang tercentang di keranjang supaya hanya produk target yang di-checkout.
+Metode pembayaran bertingkat ditulis dengan `>`, misalnya `Transfer Bank > Bank BCA`. Kosongkan item lain yang tercentang di keranjang supaya hanya produk target yang ikut checkout.
 
-## 📲 Notifikasi Telegram
+**Notifikasi Telegram:** buat bot lewat @BotFather, tempel tokennya di tab **Notifikasi**, kirim `/start` ke bot itu, lalu klik **Deteksi otomatis**.
 
-1. Di Telegram buka **@BotFather** → `/newbot` → salin token.
-2. Tempel token di tab **Notifikasi**, buka bot kamu dan kirim `/start`.
-3. Klik **Deteksi otomatis** → centang **Aktifkan** → **Simpan** → **Kirim pesan tes**.
+## Tampilan
 
-## ❓ Kalau gagal
-
-| Pesan | Solusi |
+| Tambah task | Riwayat |
 |---|---|
-| Varian "…" tidak ditemukan | Samakan tulisan varian dengan tombol di halaman produk (pesan error menampilkan pilihan yang terlihat). |
-| Tombol "…" tidak ditemukan | Shopee mengganti tulisan tombol → perbarui di **Lanjutan › Teks tombol**. |
-| Shopee meminta login / verifikasi | Selesaikan manual di tab itu. FlashBot **tidak** melewati captcha/verifikasi. |
-| Flash sale belum dimulai | Cek lagi jam flash sale di task. |
-| Total melebihi harga maksimal | Harga saat itu lebih mahal dari batasmu, jadi pesanan sengaja tidak dibuat. |
+| ![Form tambah task](docs/screenshots/1-form-task.png) | ![Riwayat dengan detail langkah](docs/screenshots/5-riwayat.png) |
+| **Notifikasi** | **Lanjutan** |
+| ![Pengaturan Telegram](docs/screenshots/3-notifikasi.png) | ![Pengaturan lanjutan dan teks tombol](docs/screenshots/4-lanjutan.png) |
 
-## ⚠️ Batasan & disclaimer
+## Kalau gagal
 
-- Komputer harus menyala dan Chrome terbuka saat flash sale. Kalau terlewat, kamu akan dikabari.
-- Stok flash sale sangat terbatas: **keberhasilan membeli tidak dijamin.**
-- FlashBot **tidak berafiliasi dengan Shopee**. Penggunaan alat otomatis dapat bertentangan dengan Syarat & Ketentuan Shopee dan berisiko pada akun; gunakan dengan tanggung jawab sendiri.
-- FlashBot sengaja **tidak** membongkar proteksi Shopee, tidak melewati captcha, dan tidak menyembunyikan diri dari deteksi. FlashBot hanya mengklik tombol yang sama seperti yang kamu klik manual.
+| Pesan | Yang perlu dilakukan |
+|---|---|
+| Varian "…" tidak ditemukan | Samakan dengan tulisan tombol varian. Pesan error menampilkan pilihan yang terlihat. |
+| Tombol "…" tidak ditemukan | Tulisan tombol Shopee berubah. Perbarui di **Lanjutan › Teks tombol**. |
+| Shopee meminta login / verifikasi | Selesaikan manual. FlashBot tidak melewati captcha. |
+| Flash sale belum dimulai | Periksa jam di task. |
 
----
+Masih gagal? Klik **Salin laporan** di Riwayat lalu [buat issue](../../issues/new?template=bug_report.yml).
 
-## 🛠️ Untuk pengembang / penjual
+## Batasan
 
-### Struktur
+- Komputer harus menyala dan Chrome terbuka saat flash sale. Jadwal yang terlewat dilaporkan.
+- Stok flash sale sangat terbatas, jadi keberhasilan tidak dijamin.
+- FlashBot tidak membongkar proteksi Shopee, tidak melewati captcha, dan tidak menyembunyikan diri dari deteksi.
+- FlashBot tidak berafiliasi dengan Shopee. Alat otomatis dapat bertentangan dengan Syarat & Ketentuan Shopee dan berisiko pada akun. Gunakan dengan tanggung jawab sendiri.
 
-```
-extension/                 ← isi yang dibagikan ke pengguna
-├── manifest.json
-├── icons/
-└── src/
-    ├── background.js      service worker: jadwal, jam server, T=0, hasil, Telegram
-    ├── content.js         langkah di halaman Shopee (produk → keranjang → checkout)
-    ├── lib/core.js        logika murni (validasi, waktu, harga, URL, Telegram)
-    ├── lib/dom.js         pencarian tombol berbasis teks, tunggu elemen, baca total
-    ├── options/           halaman pengaturan
-    ├── popup/             popup toolbar
-    └── ui/theme.css       tema bersama (terang/gelap)
-scripts/                   make-icons.mjs, pack.mjs
-test/unit/                 unit test (node:test + jsdom)
-test/e2e/                  end-to-end: Chromium asli + Shopee tiruan (server HTTPS lokal)
-legacy-python/             prototipe lama berbasis API (tidak dipakai)
-```
-
-### Cara kerja singkat
-
-1. Task disimpan → background menghitung selisih jam server Shopee (header HTTP `Date`, dipersempit dari beberapa sampel hingga ± waktu tempuh jaringan).
-2. `leadSeconds` sebelum T=0 → tab produk dibuka, lalu timer presisi di service worker menunggu T=0 (+`reloadDelayMs`) menurut jam server → tab dimuat ulang.
-3. Content script bertanya ke background "apa tugas tab ini?" setiap URL berubah (termasuk navigasi SPA). Fase disimpan di background **sebelum** setiap klik penting, jadi muat ulang halaman tidak mengulang klik.
-4. Sukses terdeteksi saat tab meninggalkan halaman checkout setelah "Buat Pesanan". Pop-up penolakan dicatat sebagai gagal.
-
-### Perintah
+## Pengembangan
 
 ```bash
-npm install          # dependensi pengembangan (Playwright, jsdom, ESLint)
-npm run lint         # ESLint
-npm test             # unit test
-npm run test:e2e     # end-to-end di Chromium (butuh openssl untuk sertifikat tes)
-npm run pack         # → dist/flashbot-checkout-v<versi>.zip untuk dibagikan
+npm install
+npm run lint && npm test && npm run test:e2e
+npm run pack
 ```
 
-Test end-to-end menjalankan extension asli di Chromium melawan Shopee tiruan. Skenario yang dicakup:
-- beli tepat waktu dengan jam komputer meleset
-- mode uji coba
-- pembayaran bertingkat
-- harga maksimal
-- varian habis
-- pesanan ditolak
-- dua task bersamaan
-- belum login
-- tab ditutup atau dibatalkan
-- jadwal terlewat
-- pengaman harga normal
-- seluruh halaman pengaturan dan popup
+Test end-to-end menjalankan extension asli di Chromium melawan Shopee tiruan (server HTTPS lokal). Lihat [CONTRIBUTING.md](CONTRIBUTING.md) untuk struktur kode dan cara merilis.
 
-### Checklist sebelum rilis
+## Lisensi
 
-- [ ] Naikkan `version` di `extension/manifest.json` (dan `package.json`).
-- [ ] `npm run lint && npm test && npm run test:e2e` lulus.
-- [ ] **Uji di Shopee asli** dengan akun sungguhan: jalankan **Uji sekarang** untuk minimal satu produk tanpa varian, satu dengan varian, dan satu dengan metode pembayaran bertingkat. Cek Riwayat.
-- [ ] `npm run pack` → bagikan zip dari `dist/`.
-
-## 📄 Lisensi
-
-MIT
+[MIT](LICENSE)

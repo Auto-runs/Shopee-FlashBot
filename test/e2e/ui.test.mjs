@@ -161,6 +161,17 @@ test('riwayat & popup menampilkan hasil dan jadwal', async () => {
     assert.match(item, /Tas Ransel/);
     await page.click('.history-item summary');
     assert.ok((await page.$$('.steps li')).length >= 5, 'detail langkah tercatat');
+    await page.evaluate(() => {
+      navigator.clipboard.writeText = async (text) => {
+        window.__copied = text;
+      };
+    });
+    await page.click('.history-item button:has-text("Salin laporan")');
+    await page.waitForSelector('#toast.show.good');
+    const report = await page.evaluate(() => window.__copied);
+    assert.match(report, /\*\*Status:\*\* Uji coba berhasil/);
+    assert.match(report, /\*\*Versi extension:\*\* 1\.0\.0/);
+    assert.match(report, /ms {2}Klik "Beli Sekarang"/);
     await shot(page, '5-riwayat');
 
     const popup = await b.context.newPage();

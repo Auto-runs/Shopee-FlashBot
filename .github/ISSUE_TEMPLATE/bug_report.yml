@@ -1,0 +1,32 @@
+name: Laporan masalah
+description: Task gagal, tombol tidak ditemukan, atau perilaku yang salah.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Terima kasih sudah melapor. Cara tercepat: buka FlashBot → **Riwayat** → klik **Salin laporan** pada percobaan yang gagal, lalu tempel di bawah.
+        Laporan itu tidak berisi token Telegram atau cookie, tapi tetap cek ulang sebelum dikirim.
+  - type: textarea
+    id: report
+    attributes:
+      label: Laporan dari Riwayat
+      description: Hasil tombol "Salin laporan".
+      placeholder: "**Status:** Gagal — ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Apa yang seharusnya terjadi?
+      placeholder: Mis. varian "Hitam" harusnya terpilih.
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Tangkapan layar halaman Shopee (opsional)
+      description: Sangat membantu bila tombol tidak ditemukan. Sensor nama, alamat, dan nomor HP.
+  - type: input
+    id: version
+    attributes:
+      label: Versi FlashBot
+      placeholder: "1.0.0"
