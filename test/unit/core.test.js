@@ -283,7 +283,7 @@ test('buildRunReport: langkah relatif, tanpa query string & rahasia', () => {
   assert.match(report, /https:\/\/shopee\.co\.id\/Kaos-i\.1\.2\n/);
   assert.doesNotMatch(report, /RAHASIA/);
   assert.match(report, /Harga maks:\*\* Rp150\.000/);
-  assert.match(report, /\+     0 ms  Tab produk dibuka/);
-  assert.match(report, /\+   250 ms  Halaman produk termuat/);
+  assert.match(report, /\+ {5}0 ms {2}Tab produk dibuka/);
+  assert.match(report, /\+ {3}250 ms {2}Halaman produk termuat/);
   assert.match(report, /Chrome 140/);
 });

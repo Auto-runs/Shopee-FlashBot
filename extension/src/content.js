@@ -42,7 +42,7 @@
 
   let overlay = null;
 
-  function showOverlay(text, tone) {
+  function showOverlay(text, tone, count) {
     if (!overlay) {
       const host = document.createElement('div');
       host.setAttribute('data-flashbot', 'overlay');
@@ -50,17 +50,23 @@
       const shadow = host.attachShadow({ mode: 'closed' });
       shadow.innerHTML =
         '<style>' +
-        '.box{font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;' +
-        'background:#1f1f1f;border-left:4px solid #ee4d2d;border-radius:8px;padding:10px 12px;' +
-        'box-shadow:0 6px 24px rgba(0,0,0,.25);max-width:340px;}' +
-        '.box.good{border-left-color:#26aa99}.box.bad{border-left-color:#e5484d}.box.warn{border-left-color:#f5a623}' +
-        '.title{font-weight:600;margin-bottom:2px;letter-spacing:.2px}' +
-        '.msg{white-space:pre-wrap;word-break:break-word;opacity:.92}' +
-        '</style><div class="box"><div class="title">⚡ FlashBot</div><div class="msg"></div></div>';
+        '.box{box-sizing:border-box;width:300px;padding:12px 14px 12px 16px;border-radius:8px;background:#161615;' +
+        'color:#ededea;font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
+        'box-shadow:0 8px 28px rgba(0,0,0,.28),inset 3px 0 0 #c6f135;}' +
+        '.box.good{box-shadow:0 8px 28px rgba(0,0,0,.28),inset 3px 0 0 #4cc987}' +
+        '.box.bad{box-shadow:0 8px 28px rgba(0,0,0,.28),inset 3px 0 0 #ff7a70}' +
+        '.box.warn{box-shadow:0 8px 28px rgba(0,0,0,.28),inset 3px 0 0 #f0b04a}' +
+        '.title{color:#a3a39b;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}' +
+        '.count{margin-top:4px;font:500 28px/1 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;' +
+        'font-variant-numeric:tabular-nums;letter-spacing:-.02em}' +
+        '.count:empty{display:none}' +
+        '.msg{margin-top:4px;white-space:pre-wrap;word-break:break-word;color:#d6d6d1}' +
+        '</style><div class="box"><div class="title">FlashBot</div><div class="count"></div><div class="msg"></div></div>';
       document.documentElement.appendChild(host);
-      overlay = { host, box: shadow.querySelector('.box'), msg: shadow.querySelector('.msg') };
+      overlay = { host, box: shadow.querySelector('.box'), count: shadow.querySelector('.count'), msg: shadow.querySelector('.msg') };
     }
     overlay.box.className = 'box' + (tone ? ' ' + tone : '');
+    overlay.count.textContent = count || '';
     overlay.msg.textContent = text;
   }
 
@@ -121,7 +127,7 @@
       },
       async finish(status, message, extra) {
         const st = FB.describeStatus(status);
-        showOverlay(st.icon + ' ' + st.label + (message ? '\n' + message : ''), st.tone);
+        showOverlay(st.label + (message ? '\n' + message : ''), st.tone);
         await send({ type: 'finish', runId: run.id, status, message, extra });
       },
       wait(fn, timeout) {
@@ -190,11 +196,11 @@
 
   function showCountdown(ctx, page) {
     const loggedOut = page === 'product' && dom.findClickable(document, ['log in', 'login'], { mode: 'exact' });
-    const note = loggedOut ? '\n⚠️ Sepertinya kamu belum login Shopee.' : '\nJangan tutup tab ini.';
+    const note = loggedOut ? 'Sepertinya kamu belum login Shopee.' : 'Jangan tutup tab ini.';
+    const label = ctx.run.dryRun ? 'Menunggu flash sale · uji coba' : 'Menunggu flash sale';
     const render = () => {
       const left = ctx.run.saleTime - ctx.serverNow();
-      const label = ctx.run.dryRun ? ' (uji coba)' : '';
-      showOverlay('Menunggu flash sale' + label + ': ' + FB.formatDuration(Math.max(0, left)) + note, loggedOut ? 'warn' : '');
+      showOverlay(label + '\n' + note, loggedOut ? 'warn' : '', FB.formatDuration(Math.max(0, left)));
     };
     render();
     countdownTimer = setInterval(render, 250);

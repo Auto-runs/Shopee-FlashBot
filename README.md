@@ -11,7 +11,7 @@ langsung dari browser dan akun Shopee kamu sendiri.
 </div>
 
 <p align="center">
-  <img src="docs/screenshots/2-daftar-task.png" width="720" alt="Daftar task FlashBot dengan hitung mundur" />
+  <img src="docs/screenshots/8-berjalan-light.png" width="760" alt="FlashBot sedang menunggu flash sale: hitung mundur dan progres langkah" />
 </p>
 
 ## Apa yang dilakukan
@@ -20,7 +20,7 @@ Kamu mengisi link produk dan jam flash sale. Menjelang waktunya, FlashBot membuk
 pilih varian, atur jumlah, **Beli Sekarang**, **Checkout**, pilih pembayaran, lalu **Buat Pesanan**.
 
 - **Waktu mengikuti jam server Shopee**, bukan jam komputer. Selisihnya dihitung otomatis.
-- **Mode uji coba dan tombol Uji sekarang** menjalankan semua langkah tapi berhenti sebelum Buat Pesanan.
+- **Mode uji coba dan tombol Uji** menjalankan semua langkah tapi berhenti sebelum Buat Pesanan.
 - **Pengaman:**
   - batal kalau total melebihi harga maksimal
   - tidak membeli kalau flash sale ternyata belum mulai
@@ -44,8 +44,8 @@ Untuk update: ekstrak versi baru ke folder yang sama, lalu klik ikon muat ulang 
 
 1. Login Shopee di Chrome yang sama dan pastikan alamat utama benar.
 2. Buka FlashBot → **Tambah task**. Isi link produk, jam flash sale, dan sebaiknya **harga maksimal**. Varian, jumlah, dan metode pembayaran opsional.
-3. Klik **Uji sekarang**. Cek hasilnya di tab **Riwayat**.
-4. Kalau uji coba berhasil, edit task dan matikan **Mode uji coba**.
+3. Klik **Uji** pada task. Cek hasilnya di **Riwayat**.
+4. Kalau uji berhasil, edit task dan pilih mode **Beli sungguhan**.
 5. Biarkan komputer menyala dan Chrome terbuka sampai flash sale selesai.
 
 Metode pembayaran bertingkat ditulis dengan `>`, misalnya `Transfer Bank > Bank BCA`. Kosongkan item lain yang tercentang di keranjang supaya hanya produk target yang ikut checkout.
@@ -54,11 +54,13 @@ Metode pembayaran bertingkat ditulis dengan `>`, misalnya `Transfer Bank > Bank 
 
 ## Tampilan
 
-| Tambah task | Riwayat |
+| Daftar task | Tambah task |
 |---|---|
-| ![Form tambah task](docs/screenshots/1-form-task.png) | ![Riwayat dengan detail langkah](docs/screenshots/5-riwayat.png) |
-| **Notifikasi** | **Lanjutan** |
-| ![Pengaturan Telegram](docs/screenshots/3-notifikasi.png) | ![Pengaturan lanjutan dan teks tombol](docs/screenshots/4-lanjutan.png) |
+| ![Daftar task dengan hitung mundur berikutnya](docs/screenshots/2-daftar-task.png) | ![Form tambah task dengan ringkasan](docs/screenshots/1-form-task.png) |
+| **Riwayat** | **Mode gelap** |
+| ![Riwayat dengan detail langkah](docs/screenshots/5-riwayat.png) | ![Tampilan mode gelap saat bot berjalan](docs/screenshots/8-berjalan-dark.png) |
+| **Di halaman Shopee** | **Popup** |
+| ![Overlay hitung mundur di halaman produk](docs/screenshots/7-overlay.png) | <img src="docs/screenshots/6-popup.png" width="300" alt="Popup toolbar" /> |
 
 ## Kalau gagal
 

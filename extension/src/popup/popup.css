@@ -10,87 +10,157 @@ body > * + * {
 .head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 15px;
+  gap: 7px;
+  margin-right: auto;
+  font-size: 14px;
 }
 
 .brand img {
   border-radius: 5px;
 }
 
+#server-clock {
+  font-size: 12px;
+}
+
 .label {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--muted);
   margin: 0 0 6px;
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* Kartu utama */
+.hero {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
-.list:empty {
-  display: none;
+.hero.live {
+  border-color: var(--ink);
 }
 
-.item {
-  padding: 10px 12px;
-}
-
-.item-title {
+.hero-label {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-weight: 600;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.item-title span:first-child {
+.hero-count {
+  margin-top: 6px;
+  font: 500 32px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.hero-name {
+  margin-top: 8px;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 0;
 }
 
-.item-sub {
+.hero-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  color: var(--ink-2);
   font-size: 12.5px;
-  color: var(--muted);
-  margin-top: 2px;
+}
+
+.hero .stepper {
+  margin-top: 12px;
+}
+
+.hero .stepper li {
+  font-size: 11px;
+}
+
+.hero-step {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
-.countdown {
-  font-family: var(--mono);
-  font-size: 12.5px;
-  color: var(--accent);
-  white-space: nowrap;
-}
-
-.item.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.item.active .item-title {
-  color: var(--accent);
-}
-
-.item-actions {
-  margin-top: 8px;
+.hero-actions {
+  margin-top: 12px;
 }
 
 .empty {
-  margin: 0;
+  padding: 18px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  text-align: center;
+  font-size: 13px;
+}
+
+/* Baris */
+.rows {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 10px;
+  padding: 9px 12px;
+}
+
+.item + .item {
+  border-top: 1px solid var(--line);
+}
+
+.item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.item-sub {
+  grid-column: 1 / -1;
+  color: var(--ink-2);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.item .countdown {
+  color: var(--signal-text);
+  font: 400 12px/1.6 var(--mono);
+}
+
+.item.result {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.item.result .icon {
+  grid-row: 1 / span 2;
+  margin-top: 2px;
+}
+
+.item.result .item-sub {
+  grid-column: 2;
 }
 
 .foot {

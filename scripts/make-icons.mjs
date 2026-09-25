@@ -1,4 +1,4 @@
-// Membuat ikon PNG extension (kotak oranye membulat + petir putih) tanpa dependensi.
+// Membuat ikon PNG extension (kotak tinta membulat + petir lime) tanpa dependensi.
 // Pemakaian: node scripts/make-icons.mjs
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'extension', 'icons');
-const BG = [238, 77, 45];
-const FG = [255, 255, 255];
+const BG = [22, 22, 21];
+const FG = [198, 241, 53];
 
 // Petir dalam koordinat 0..1
 const BOLT = [
