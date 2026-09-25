@@ -49,5 +49,9 @@ Kontribusi untuk melewati captcha/verifikasi, membongkar atau meniru header keam
 ## Merilis versi baru (maintainer)
 
 1. Naikkan `version` di `extension/manifest.json` dan `package.json`.
-2. Pindahkan isi `[Unreleased]` di `CHANGELOG.md` ke bagian versi baru.
-3. `git tag v<versi> && git push origin v<versi>`. Workflow **Release** menjalankan semua test lalu menerbitkan zip ke halaman Releases.
+2. Pindahkan isi `[Unreleased]` di `CHANGELOG.md` ke bagian versi baru, lalu merge ke `main`.
+3. Di GitHub buka **Releases → Draft a new release**, ketik tag baru `v<versi>` (target `main`), lalu **Publish release**.
+   Workflow **Release** menjalankan semua test lalu memasang zip extension ke rilis itu (±5 menit).
+   Bila kolom deskripsi dikosongkan, catatan diambil dari `CHANGELOG.md`.
+
+Alternatif dari terminal: `git tag v<versi> && git push origin v<versi>`.

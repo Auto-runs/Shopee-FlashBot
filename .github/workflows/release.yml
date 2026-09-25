@@ -1,20 +1,32 @@
 name: Release
 
-# Buat tag sesuai versi di extension/manifest.json, mis.:
-#   git tag v1.0.0 && git push origin v1.0.0
+# Dua cara membuat rilis (versi harus sama dengan extension/manifest.json):
+#  1. Di GitHub: Releases → Draft a new release → tag baru "v1.0.0" → Publish.
+#  2. Dari terminal: git tag v1.0.0 && git push origin v1.0.0
+# Workflow menjalankan semua test, lalu memasang zip extension ke rilis itu.
 on:
+  release:
+    types: [published]
   push:
     tags: ['v*']
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.event.release.tag_name || github.ref_name }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      TAG: ${{ github.event.release.tag_name || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -23,17 +35,21 @@ jobs:
       - name: Cek versi tag = versi manifest
         run: |
           MANIFEST=$(node -p "require('./extension/manifest.json').version")
-          if [ "v$MANIFEST" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME tidak sama dengan versi manifest v$MANIFEST"; exit 1
+          if [ "v$MANIFEST" != "$TAG" ]; then
+            echo "::error::Tag $TAG tidak sama dengan versi manifest v$MANIFEST"; exit 1
           fi
       - run: npx playwright install --with-deps chromium
       - run: npm run lint
       - run: npm test
       - run: npm run test:e2e
       - run: npm run pack
-      - name: Terbitkan GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Pasang zip ke GitHub Release
         run: |
-          NOTES=$(awk "/^## \\[${GITHUB_REF_NAME#v}\\]/{f=1;next} /^## \\[/{f=0} f" CHANGELOG.md)
-          gh release create "$GITHUB_REF_NAME" dist/*.zip --title "FlashBot $GITHUB_REF_NAME" --notes "${NOTES:-Lihat CHANGELOG.md}"
+          NOTES=$(awk "/^## \\[${TAG#v}\\]/{f=1;next} /^## \\[/{f=0} f" CHANGELOG.md)
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.zip --clobber
+            BODY=$(gh release view "$TAG" --json body --jq .body)
+            if [ -z "$BODY" ] && [ -n "$NOTES" ]; then gh release edit "$TAG" --notes "$NOTES"; fi
+          else
+            gh release create "$TAG" dist/*.zip --title "FlashBot $TAG" --notes "${NOTES:-Lihat CHANGELOG.md}"
+          fi
