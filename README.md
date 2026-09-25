@@ -1,161 +1,145 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/SHOPEE-FLASH%20BOT-orange?style=for-the-badge&logo=shopee&logoColor=white"/>
-  
-  <p>Automated Shopee Flash Sale bot that fires concurrent checkout requests at T=0 with NTP time synchronisation.</p>
+  <img src="extension/icons/icon128.png" width="72" alt="" />
 
-  <img src="https://img.shields.io/github/stars/Auto-runs/Shopee-FlashBot?style=flat-square"/>
-  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square"/>
-  <img src="https://img.shields.io/badge/python-3.11+-blue?style=flat-square"/>
+# FlashBot Checkout
+
+Chrome extension untuk **checkout otomatis flash sale Shopee Indonesia tepat waktu**,
+langsung dari browser dan akun Shopee kamu sendiri.
+
+<img src="https://img.shields.io/badge/Chrome-Manifest%20V3-orange?style=flat-square"/>
+<img src="https://img.shields.io/badge/license-MIT-green?style=flat-square"/>
+
 </div>
-
-# ⚡ Shopee Flash Sale Bot
-
-Bot otomatis untuk checkout item flash sale Shopee tepat di T=0 menggunakan concurrent requests dan NTP time synchronisation.
 
 ---
 
 ## ✨ Fitur
 
-- 🕐 **NTP Time Sync** — sinkronisasi waktu akurat ±1-5ms via `pool.ntp.org`
-- 🚀 **Concurrent Checkout** — 5 request checkout dikirim serentak di T=0
-- 🍪 **Cookie Auth** — login via export cookies browser, tanpa perlu password
-- 🔄 **Auto Retry** — exponential backoff untuk handle rate limit & network error
-- 📦 **Pre-built Payload** — cart payload disiapkan sebelum T=0 untuk zero overhead
-- 📋 **Structured Logging** — log detail setiap phase ke console dan file
+- 🕐 **Tepat T=0 menurut jam server Shopee.** Selisih jam komputer dihitung otomatis dari server, jadi jam komputer yang meleset tidak masalah.
+- 🛒 **Alur beli lengkap.** Pilih varian → atur jumlah → **Beli Sekarang** → **Checkout** → pilih metode pembayaran → **Buat Pesanan**.
+- 🧪 **Mode uji coba & tombol "Uji sekarang".** Jalankan semua langkah di akunmu kapan saja, berhenti tepat sebelum "Buat Pesanan".
+- 🛡️ **Pengaman:**
+  - **Harga maksimal**: batal kalau total melebihi batas.
+  - **Tidak membeli di harga normal** bila flash sale belum mulai.
+  - **"Buat Pesanan" tidak pernah diklik dua kali.**
+- 📋 **Banyak task sekaligus.** Beberapa produk dan jadwal, masing-masing di tab sendiri.
+- 📲 **Notifikasi Telegram** saat bot siap, berhasil, gagal, atau jadwal terlewat.
+- ⚙️ **Tampilan pengaturan lengkap**, plus riwayat dengan detail tiap langkah (sampai milidetik).
+- 🔧 **Tahan perubahan tampilan Shopee.** Tombol dicari berdasarkan teksnya; teks bisa diubah dari halaman pengaturan tanpa update kode.
+- 🔒 **Aman:** tidak ada password atau cookie yang disalin atau dikirim ke mana pun. Semua berjalan di browser pengguna.
+
+## 📦 Cara pasang (untuk pengguna)
+
+1. Ekstrak file `flashbot-checkout-v1.0.0.zip` ke sebuah folder (jangan dihapus setelah dipasang).
+2. Buka Chrome → ketik `chrome://extensions` di address bar.
+3. Aktifkan **Developer mode** (pojok kanan atas).
+4. Klik **Load unpacked** → pilih folder hasil ekstrak.
+5. Halaman pengaturan FlashBot terbuka otomatis. Pin ikon ⚡ di toolbar supaya mudah diakses.
+
+## ▶️ Cara pakai
+
+1. **Login Shopee** di Chrome yang sama, lalu pastikan **alamat utama** sudah benar.
+2. Buka FlashBot → **+ Tambah task** → isi:
+   - link produk
+   - jam flash sale
+   - varian (opsional)
+   - jumlah
+   - harga maksimal (disarankan)
+   - metode pembayaran (opsional)
+3. Klik **Uji sekarang**. Bot membuka tab baru dan menjalankan semua langkah tanpa membuat pesanan. Cek hasilnya di tab **Riwayat**.
+4. Kalau uji coba berhasil: **Edit** task → matikan **Mode uji coba** → Simpan.
+5. Biarkan komputer menyala dan Chrome terbuka. Sekitar 60 detik sebelum flash sale, bot membuka tab produk. Tepat di T=0 halaman dimuat ulang dan pembelian berjalan otomatis.
+6. Setelah berhasil, selesaikan pembayaran di tab Shopee.
+
+**Tips**
+- Metode pembayaran bertingkat ditulis dengan `>`, misalnya `Transfer Bank > Bank BCA` atau `Ubah > ShopeePay`.
+- Kosongkan item lain yang tercentang di keranjang supaya hanya produk target yang di-checkout.
+
+## 📲 Notifikasi Telegram
+
+1. Di Telegram buka **@BotFather** → `/newbot` → salin token.
+2. Tempel token di tab **Notifikasi**, buka bot kamu dan kirim `/start`.
+3. Klik **Deteksi otomatis** → centang **Aktifkan** → **Simpan** → **Kirim pesan tes**.
+
+## ❓ Kalau gagal
+
+| Pesan | Solusi |
+|---|---|
+| Varian "…" tidak ditemukan | Samakan tulisan varian dengan tombol di halaman produk (pesan error menampilkan pilihan yang terlihat). |
+| Tombol "…" tidak ditemukan | Shopee mengganti tulisan tombol → perbarui di **Lanjutan › Teks tombol**. |
+| Shopee meminta login / verifikasi | Selesaikan manual di tab itu. FlashBot **tidak** melewati captcha/verifikasi. |
+| Flash sale belum dimulai | Cek lagi jam flash sale di task. |
+| Total melebihi harga maksimal | Harga saat itu lebih mahal dari batasmu, jadi pesanan sengaja tidak dibuat. |
+
+## ⚠️ Batasan & disclaimer
+
+- Komputer harus menyala dan Chrome terbuka saat flash sale. Kalau terlewat, kamu akan dikabari.
+- Stok flash sale sangat terbatas: **keberhasilan membeli tidak dijamin.**
+- FlashBot **tidak berafiliasi dengan Shopee**. Penggunaan alat otomatis dapat bertentangan dengan Syarat & Ketentuan Shopee dan berisiko pada akun; gunakan dengan tanggung jawab sendiri.
+- FlashBot sengaja **tidak** membongkar proteksi Shopee, tidak melewati captcha, dan tidak menyembunyikan diri dari deteksi. FlashBot hanya mengklik tombol yang sama seperti yang kamu klik manual.
 
 ---
 
-## 🗂️ Struktur Project
+## 🛠️ Untuk pengembang / penjual
+
+### Struktur
 
 ```
-shopee_botflash/
-├── main.py                  # Orchestrator utama
-├── config/
-│   └── settings.py          # Semua konfigurasi & URL
-├── modules/
-│   ├── __init__.py
-│   ├── auth.py              # Cookie injection & authentication
-│   ├── cart.py              # Add to cart & payload builder
-│   ├── checkout_engine.py   # Concurrent checkout executor
-│   ├── logger.py            # Logging setup
-│   ├── product_monitor.py   # Product availability checker
-│   ├── session_manager.py   # HTTP session & retry wrapper
-│   └── time_sync.py         # NTP clock synchronisation
-├── sessions/
-│   └── mysession.json       # ← TIDAK di-commit (berisi cookies)
-├── logs/                    # ← TIDAK di-commit
-├── .env                     # ← TIDAK di-commit (berisi credentials)
-└── .env.example             # Template konfigurasi
+extension/                 ← isi yang dibagikan ke pengguna
+├── manifest.json
+├── icons/
+└── src/
+    ├── background.js      service worker: jadwal, jam server, T=0, hasil, Telegram
+    ├── content.js         langkah di halaman Shopee (produk → keranjang → checkout)
+    ├── lib/core.js        logika murni (validasi, waktu, harga, URL, Telegram)
+    ├── lib/dom.js         pencarian tombol berbasis teks, tunggu elemen, baca total
+    ├── options/           halaman pengaturan
+    ├── popup/             popup toolbar
+    └── ui/theme.css       tema bersama (terang/gelap)
+scripts/                   make-icons.mjs, pack.mjs
+test/unit/                 unit test (node:test + jsdom)
+test/e2e/                  end-to-end: Chromium asli + Shopee tiruan (server HTTPS lokal)
+legacy-python/             prototipe lama berbasis API (tidak dipakai)
 ```
 
----
+### Cara kerja singkat
 
-## ⚙️ Setup
+1. Task disimpan → background menghitung selisih jam server Shopee (header HTTP `Date`, dipersempit dari beberapa sampel hingga ± waktu tempuh jaringan).
+2. `leadSeconds` sebelum T=0 → tab produk dibuka, lalu timer presisi di service worker menunggu T=0 (+`reloadDelayMs`) menurut jam server → tab dimuat ulang.
+3. Content script bertanya ke background "apa tugas tab ini?" setiap URL berubah (termasuk navigasi SPA). Fase disimpan di background **sebelum** setiap klik penting, jadi muat ulang halaman tidak mengulang klik.
+4. Sukses terdeteksi saat tab meninggalkan halaman checkout setelah "Buat Pesanan". Pop-up penolakan dicatat sebagai gagal.
 
-### 1. Clone & Install dependencies
+### Perintah
 
 ```bash
-git clone https://github.com/Auto-runs/shopee_Botflash.git
-cd shopee_botflash
-python -m venv venv
-venv\Scripts\activate        # Windows
-pip install aiohttp python-dotenv ntplib
+npm install          # dependensi pengembangan (Playwright, jsdom, ESLint)
+npm run lint         # ESLint
+npm test             # unit test
+npm run test:e2e     # end-to-end di Chromium (butuh openssl untuk sertifikat tes)
+npm run pack         # → dist/flashbot-checkout-v<versi>.zip untuk dibagikan
 ```
 
-### 2. Konfigurasi `.env`
+Test end-to-end menjalankan extension asli di Chromium melawan Shopee tiruan. Skenario yang dicakup:
+- beli tepat waktu dengan jam komputer meleset
+- mode uji coba
+- pembayaran bertingkat
+- harga maksimal
+- varian habis
+- pesanan ditolak
+- dua task bersamaan
+- belum login
+- tab ditutup atau dibatalkan
+- jadwal terlewat
+- pengaman harga normal
+- seluruh halaman pengaturan dan popup
 
-Buat file `.env` dari template:
+### Checklist sebelum rilis
 
-```bash
-cp .env.example .env
-```
+- [ ] Naikkan `version` di `extension/manifest.json` (dan `package.json`).
+- [ ] `npm run lint && npm test && npm run test:e2e` lulus.
+- [ ] **Uji di Shopee asli** dengan akun sungguhan: jalankan **Uji sekarang** untuk minimal satu produk tanpa varian, satu dengan varian, dan satu dengan metode pembayaran bertingkat. Cek Riwayat.
+- [ ] `npm run pack` → bagikan zip dari `dist/`.
 
-Isi dengan data kamu:
+## 📄 Lisensi
 
-```env
-SHOPEE_USER=username_kamu
-SHOPEE_SHOP_ID=1234567890
-SHOPEE_ITEM_ID=9876543210
-SHOPEE_MODEL_ID=1122334455
-SHOPEE_TARGET_TS=1773205200
-SHOPEE_QUANTITY=1
-SHOPEE_ADDRESS_ID=           # opsional
-SHOPEE_PAYMENT_ID=           # opsional
-```
-
-> **Cara dapat `SHOPEE_TARGET_TS`:** Jalankan di browser console:
-> ```js
-> new Date('2026-03-11T12:00:00+07:00').getTime() / 1000
-> ```
-
-### 3. Export cookies dari browser
-
-1. Login ke [shopee.co.id](https://shopee.co.id) di Chrome
-2. Install extension **Cookie-Editor**
-3. Export cookies → format JSON
-4. Simpan ke `sessions/mysession.json`
-
-### 4. Dapat `MODEL_ID`
-
-Jalankan di browser console saat di halaman produk:
-
-```js
-fetch(`/api/v4/pdp/get_pc?item_id=ITEM_ID&shop_id=SHOP_ID`, {
-  credentials: 'include'
-})
-.then(r => r.json())
-.then(d => d.data.item.models.forEach(m => 
-  console.log(m.name, '→ model_id:', m.model_id)
-));
-```
-
----
-
-## ▶️ Cara Pakai
-
-```bash
-python main.py
-```
-
-Bot akan otomatis:
-1. Inject cookies & verifikasi login
-2. Sync waktu via NTP
-3. Countdown sampai ~30 detik sebelum flash sale
-4. Add to cart
-5. Fire 5 concurrent checkout request tepat di T=0
-
-### Output sukses:
-```
-🎉 ORDER BERHASIL!
-   Order ID   : 123456789
-   Latency    : 87.3 ms
-   Total time : 0.234 s
-```
-
----
-
-## ⚠️ Penting
-
-- **Jangan tutup terminal** selama bot berjalan
-- **Sync jam Windows** sebelum menjalankan: `w32tm /resync /force` (Run as Admin)
-- **Export ulang cookies** setiap kali session expired
----
-
-## 📋 Environment Variables
-
-| Variable | Wajib | Keterangan |
-|---|---|---|
-| `SHOPEE_USER` | ✅ | Username/email akun Shopee |
-| `SHOPEE_SHOP_ID` | ✅ | ID toko dari URL produk |
-| `SHOPEE_ITEM_ID` | ✅ | ID item dari URL produk |
-| `SHOPEE_MODEL_ID` | ✅ | ID varian/model produk |
-| `SHOPEE_TARGET_TS` | ✅ | Unix timestamp waktu flash sale |
-| `SHOPEE_QUANTITY` | ❌ | Jumlah beli (default: 1) |
-| `SHOPEE_ADDRESS_ID` | ❌ | ID alamat pengiriman |
-| `SHOPEE_PAYMENT_ID` | ❌ | ID metode pembayaran |
-
----
-
-## 📄 License
-
-MIT License — bebas digunakan dan dimodifikasi.
+MIT
