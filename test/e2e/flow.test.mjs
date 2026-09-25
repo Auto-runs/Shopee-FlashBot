@@ -302,3 +302,18 @@ test('setelah Buat Pesanan Shopee kembali ke keranjang / minta verifikasi → "p
     });
   }
 });
+
+test('jam komputer meleset + sinkron jam lambat → tetap dimuat ulang tepat T=0', async () => {
+  // Meniru run CI yang pernah gagal: jadwal dihitung sebelum selisih jam diketahui.
+  await withBrowser({ skewMs: 4000, headDelayMs: 300 }, async (b) => {
+    const saleTime = b.mock.serverNow() + 9000;
+    const p = b.mock.addProduct({ name: 'Sinkron Lambat', saleTime });
+    const task = await b.addTask({ url: p.url, saleTime, dryRun: true });
+    const run = await b.waitForRun(task.id);
+    assert.equal(run.status, 'dry_run_ok', describeRun(run));
+    const loads = b.mock.eventsOf('product_load', p.key);
+    assert.ok(loads.some((l) => !l.active), 'tab dibuka sebelum flash sale, bukan terlambat');
+    const lag = loads.find((l) => l.active).at - saleTime;
+    assert.ok(lag >= 0 && lag < 1500, `halaman dimuat ulang ${lag} ms setelah T=0\n` + describeRun(run));
+  });
+});

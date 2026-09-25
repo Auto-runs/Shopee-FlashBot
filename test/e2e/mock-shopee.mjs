@@ -48,8 +48,9 @@ function readBody(req) {
 }
 
 export class MockShopee {
-  constructor({ skewMs = 0 } = {}) {
+  constructor({ skewMs = 0, headDelayMs = 0 } = {}) {
     this.skewMs = skewMs;
+    this.headDelayMs = headDelayMs; // meniru jaringan lambat saat sinkron jam
     this.products = new Map();
     this.placeResult = 'success';
     this.loggedIn = true;
@@ -110,6 +111,7 @@ export class MockShopee {
     const body = await readBody(req);
     const host = String(req.headers.host || '').split(':')[0];
     const url = new URL(req.url, 'https://' + host);
+    if (req.method === 'HEAD' && this.headDelayMs) await new Promise((r) => setTimeout(r, this.headDelayMs));
     let out;
     try {
       out = host === 'api.telegram.org' ? this.telegramResponse(url, body) : this.shopeeResponse(req.method, url, body);
