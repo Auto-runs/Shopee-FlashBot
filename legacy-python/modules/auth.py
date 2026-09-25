@@ -18,6 +18,7 @@ Flow
 """
 
 import hashlib
+import secrets
 import time
 from typing import Optional
 
@@ -125,15 +126,24 @@ class Authenticator:
         """
         Construct the login POST body.
 
-        Shopee's web client sends a SHA-256 hash of the password together
-        with a client-side timestamp.  We replicate that here.
+        Shopee's web client sends a hash of the password together with a
+        client-side timestamp.  We replicate that here, but use a randomly
+        generated per-request salt with PBKDF2 (instead of a bare SHA-256
+        digest) so the hash isn't vulnerable to rainbow-table lookups.
         """
-        password_hash = hashlib.sha256(self._password.encode()).hexdigest()
+        salt = secrets.token_hex(16)
+        password_hash = hashlib.pbkdf2_hmac(
+            "sha256",
+            self._password.encode(),
+            salt.encode(),
+            100_000,
+        ).hex()
 
         return {
             "username"      : self._username,
             "password"      : self._password,
             "password_hash" : password_hash,
+            "password_salt" : salt,
             "support_whatsapp": False,
         }
 
