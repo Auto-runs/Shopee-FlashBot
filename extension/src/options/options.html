@@ -3,305 +3,326 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FlashBot Checkout</title>
+    <title>FlashBot</title>
     <link rel="icon" href="../../icons/icon32.png" />
     <link rel="stylesheet" href="../ui/theme.css" />
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="brand">
-        <img src="../../icons/icon48.png" alt="" width="28" height="28" />
-        <div>
-          <div class="brand-name">FlashBot Checkout</div>
-          <div class="brand-sub muted small" id="version"></div>
-        </div>
-      </div>
-      <nav class="tabs" role="tablist" aria-label="Menu">
-        <button class="tab" role="tab" data-view="tasks">Task</button>
-        <button class="tab" role="tab" data-view="notify">Notifikasi</button>
-        <button class="tab" role="tab" data-view="advanced">Lanjutan</button>
-        <button class="tab" role="tab" data-view="history">Riwayat</button>
-        <button class="tab" role="tab" data-view="help">Panduan</button>
-      </nav>
-    </header>
-
-    <main>
-      <!-- ── Task ─────────────────────────────────────────────────────────── -->
-      <section id="view-tasks" class="view" role="tabpanel">
-        <div id="active-runs" class="stack"></div>
-        <div id="warnings" class="stack"></div>
-
-        <div class="section-head">
-          <div>
-            <h1>Task flash sale</h1>
-            <p class="muted small">Satu task = satu produk yang mau dibeli otomatis pada jam tertentu.</p>
-          </div>
-          <button id="btn-add" class="btn primary" type="button">+ Tambah task</button>
+    <div class="app">
+      <aside class="nav">
+        <div class="brand">
+          <img src="../../icons/icon48.png" alt="" width="24" height="24" />
+          <span class="brand-name">FlashBot</span>
+          <span class="brand-version mono" id="version"></span>
         </div>
 
-        <form id="task-form" class="card form-card" hidden novalidate>
-          <input type="hidden" id="f-id" />
-          <div class="form-title">
-            <h2 id="form-title">Task baru</h2>
-            <button type="button" class="btn ghost sm" id="btn-cancel-form">Tutup</button>
+        <nav class="nav-list" aria-label="Menu">
+          <button class="nav-item" data-view="tasks"><i data-icon="tasks"></i><span>Task</span><span class="nav-count mono" id="nav-count"></span></button>
+          <button class="nav-item" data-view="history"><i data-icon="history"></i><span>Riwayat</span></button>
+          <button class="nav-item" data-view="notify"><i data-icon="bell"></i><span>Notifikasi</span></button>
+          <button class="nav-item" data-view="advanced"><i data-icon="sliders"></i><span>Lanjutan</span></button>
+          <button class="nav-item" data-view="help"><i data-icon="book"></i><span>Panduan</span></button>
+        </nav>
+
+        <div class="nav-foot">
+          <div class="clock">
+            <span class="faint">Jam server</span>
+            <time id="server-clock">--:--:--</time>
           </div>
+          <a class="nav-link" href="https://github.com/Auto-runs/Shopee-FlashBot" target="_blank" rel="noopener">
+            Kode sumber <i data-icon="external" data-size="13"></i>
+          </a>
+        </div>
+      </aside>
 
-          <div class="grid">
-            <label class="field span-2" data-field="url">
-              <span class="field-label">Link produk Shopee</span>
-              <input type="url" id="f-url" placeholder="https://shopee.co.id/Nama-Produk-i.123456.7890123" autocomplete="off" required />
-              <span class="field-hint" id="url-preview">Salin dari address bar saat membuka halaman produk.</span>
-              <span class="field-error"></span>
-            </label>
-
-            <label class="field span-2" data-field="name">
-              <span class="field-label">Nama task <span class="muted">(opsional)</span></span>
-              <input type="text" id="f-name" maxlength="80" placeholder="Otomatis dari nama produk" />
-              <span class="field-error"></span>
-            </label>
-
-            <label class="field" data-field="saleTime">
-              <span class="field-label">Waktu flash sale dimulai</span>
-              <input type="datetime-local" id="f-time" step="1" required />
-              <span class="field-hint" id="tz-hint"></span>
-              <span class="quick-times" id="quick-times" aria-label="Pilih jam cepat"></span>
-              <span class="field-error"></span>
-            </label>
-
-            <label class="field" data-field="variants">
-              <span class="field-label">Varian <span class="muted">(opsional)</span></span>
-              <input type="text" id="f-variants" placeholder="mis. Hitam, XL" autocomplete="off" />
-              <span class="field-hint">Tulis persis seperti di tombol varian. Pisahkan dengan koma bila lebih dari satu.</span>
-              <span class="field-error"></span>
-            </label>
-
-            <label class="field" data-field="quantity">
-              <span class="field-label">Jumlah</span>
-              <input type="number" id="f-qty" min="1" max="99" value="1" />
-              <span class="field-error"></span>
-            </label>
-
-            <label class="field" data-field="maxPrice">
-              <span class="field-label">Harga maksimal <span class="muted">(disarankan)</span></span>
-              <input type="text" id="f-maxprice" inputmode="numeric" placeholder="mis. 150.000" autocomplete="off" />
-              <span class="field-hint">Pesanan dibatalkan bila “Total Pembayaran” melebihi angka ini.</span>
-              <span class="field-error"></span>
-            </label>
-
-            <label class="field span-2" data-field="payment">
-              <span class="field-label">Metode pembayaran <span class="muted">(opsional)</span></span>
-              <input type="text" id="f-payment" placeholder="mis. ShopeePay   atau   Transfer Bank > Bank BCA" autocomplete="off" />
-              <span class="field-hint">Kosongkan untuk memakai pilihan default di akun Shopee kamu. Pakai “&gt;” untuk pilihan bertingkat, mis. <i>Ubah &gt; ShopeePay</i>.</span>
-              <span class="field-error"></span>
-            </label>
-
-            <div class="span-2 dryrun-box">
-              <label class="check">
-                <input type="checkbox" id="f-dryrun" checked />
-                <span>
-                  <strong>Mode uji coba</strong>
-                  <span class="field-hint">Bot menjalankan semua langkah tapi <b>berhenti sebelum klik “Buat Pesanan”</b>. Matikan kalau sudah yakin dan siap membeli sungguhan.</span>
-                </span>
-              </label>
+      <main>
+        <!-- ── Task ───────────────────────────────────────────────────────── -->
+        <section id="view-tasks" class="view">
+          <header class="page-head">
+            <div>
+              <h1>Task</h1>
+              <p class="muted" id="tasks-summary">Produk yang dibeli otomatis saat flash sale dimulai.</p>
             </div>
-          </div>
+            <button id="btn-add" class="btn primary" type="button"><i data-icon="plus"></i>Tambah task</button>
+          </header>
 
-          <div class="form-actions">
-            <button type="submit" class="btn primary" id="btn-save-task">Simpan &amp; jadwalkan</button>
-            <button type="button" class="btn" id="btn-cancel-form-2">Batal</button>
-          </div>
-        </form>
+          <div id="hero"></div>
+          <div id="warnings" class="stack"></div>
 
-        <div id="task-list" class="stack"></div>
-        <div id="empty" class="card empty" hidden>
-          <div class="empty-icon" aria-hidden="true">⚡</div>
-          <h2>Belum ada task</h2>
-          <p class="muted">Tambahkan produk flash sale yang mau kamu beli. Tips: pakai <b>Uji sekarang</b> dulu untuk memastikan semua langkah berjalan di akunmu.</p>
-          <button class="btn primary" type="button" id="btn-add-empty">+ Tambah task pertama</button>
-        </div>
-      </section>
+          <form id="task-form" class="panel form" hidden novalidate>
+            <input type="hidden" id="f-id" />
+            <div class="form-head">
+              <h2 id="form-title">Task baru</h2>
+              <button type="button" class="btn quiet sm icon-only" id="btn-cancel-form" aria-label="Tutup"><i data-icon="x"></i></button>
+            </div>
 
-      <!-- ── Notifikasi ───────────────────────────────────────────────────── -->
-      <section id="view-notify" class="view" role="tabpanel" hidden>
-        <div class="section-head">
-          <div>
-            <h1>Notifikasi Telegram</h1>
-            <p class="muted small">Dapat kabar di HP saat bot siap, berhasil, atau gagal.</p>
-          </div>
-        </div>
-
-        <form id="notify-form" class="card form-card" novalidate>
-          <label class="check">
-            <input type="checkbox" id="n-enabled" />
-            <span><strong>Aktifkan notifikasi Telegram</strong></span>
-          </label>
-
-          <div class="grid">
-            <label class="field span-2">
-              <span class="field-label">Token bot</span>
-              <span class="input-row">
-                <input type="password" id="n-token" autocomplete="off" spellcheck="false" placeholder="123456789:ABCdef..." />
-                <button type="button" class="btn" id="btn-show-token">Lihat</button>
-              </span>
-            </label>
-            <label class="field span-2">
-              <span class="field-label">Chat ID</span>
-              <span class="input-row">
-                <input type="text" id="n-chat" autocomplete="off" spellcheck="false" placeholder="mis. 123456789" />
-                <button type="button" class="btn" id="btn-detect-chat">Deteksi otomatis</button>
-              </span>
-            </label>
-            <label class="check span-2">
-              <input type="checkbox" id="n-arm" />
-              <span>Kirim juga pesan “Bot siap” saat tab produk dibuka menjelang flash sale</span>
-            </label>
-          </div>
-
-          <div id="notify-error" class="callout bad" hidden></div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn primary">Simpan</button>
-            <button type="button" class="btn" id="btn-test-telegram">Kirim pesan tes</button>
-          </div>
-        </form>
-
-        <div class="card help-card">
-          <h2>Cara menyiapkan (±2 menit)</h2>
-          <ol>
-            <li>Di Telegram, buka <b>@BotFather</b> → kirim <code>/newbot</code> → ikuti langkahnya → salin <b>token</b> yang diberikan.</li>
-            <li>Tempel token di kolom <b>Token bot</b> di atas.</li>
-            <li>Buka bot baru kamu di Telegram lalu kirim <code>/start</code>.</li>
-            <li>Klik <b>Deteksi otomatis</b> untuk mengisi Chat ID, centang <b>Aktifkan</b>, lalu <b>Simpan</b>.</li>
-            <li>Klik <b>Kirim pesan tes</b> untuk memastikan pesan masuk.</li>
-          </ol>
-        </div>
-      </section>
-
-      <!-- ── Lanjutan ─────────────────────────────────────────────────────── -->
-      <section id="view-advanced" class="view" role="tabpanel" hidden>
-        <div class="section-head">
-          <div>
-            <h1>Pengaturan lanjutan</h1>
-            <p class="muted small">Nilai bawaan sudah cocok untuk kebanyakan orang.</p>
-          </div>
-        </div>
-
-        <form id="advanced-form" class="card form-card" novalidate>
-          <h2>Waktu</h2>
-          <div class="grid">
-            <label class="field">
-              <span class="field-label">Buka tab produk (detik sebelum mulai)</span>
-              <input type="number" id="a-lead" min="5" max="900" />
-              <span class="field-hint">Bawaan 60. Beri waktu untuk login atau menyelesaikan captcha.</span>
-            </label>
-            <label class="field">
-              <span class="field-label">Jeda muat ulang setelah T=0 (ms)</span>
-              <input type="number" id="a-delay" min="0" max="5000" step="50" />
-              <span class="field-hint">Bawaan 100. Jeda kecil agar tidak memuat halaman sebelum server berganti ke harga flash sale.</span>
-            </label>
-            <label class="field">
-              <span class="field-label">Maksimal muat ulang</span>
-              <input type="number" id="a-reloads" min="0" max="10" />
-              <span class="field-hint">Bila tombol belum muncul atau flash sale belum dimulai.</span>
-            </label>
-            <label class="field">
-              <span class="field-label">Batas tunggu per langkah (detik)</span>
-              <input type="number" id="a-timeout" min="3" max="60" />
-            </label>
-            <div class="span-2 time-sync">
-              <label class="check">
-                <input type="checkbox" id="a-timesync" />
-                <span>
-                  <strong>Sinkronkan dengan jam server Shopee</strong>
-                  <span class="field-hint">Bot memakai jam server, jadi jam komputer yang meleset tidak masalah.</span>
-                </span>
+            <div class="group" role="group" aria-labelledby="grp-produk">
+              <div class="group-label" id="grp-produk">Produk</div>
+              <div class="fields">
+              <label class="field" data-field="url">
+                <span class="label">Link produk</span>
+                <input type="url" id="f-url" placeholder="https://shopee.co.id/Nama-Produk-i.123456.7890123" autocomplete="off" required />
+                <span class="hint" id="url-preview"></span>
+                <span class="error"></span>
               </label>
-              <div class="input-row">
-                <button type="button" class="btn" id="btn-check-time">Cek selisih jam sekarang</button>
-                <span id="time-result" class="muted small"></span>
+              <label class="field" data-field="name">
+                <span class="label">Nama <span class="faint">opsional</span></span>
+                <input type="text" id="f-name" maxlength="80" placeholder="Otomatis dari link" />
+                <span class="error"></span>
+              </label>
               </div>
             </div>
+
+            <div class="group" role="group" aria-labelledby="grp-jadwal">
+              <div class="group-label" id="grp-jadwal">Jadwal</div>
+              <div class="fields">
+              <label class="field" data-field="saleTime">
+                <span class="label">Flash sale dimulai <span class="faint" id="tz-hint"></span></span>
+                <input type="datetime-local" id="f-time" step="1" required />
+                <span class="quick-times" id="quick-times"></span>
+                <span class="error"></span>
+              </label>
+              </div>
+            </div>
+
+            <div class="group cols" role="group" aria-labelledby="grp-pembelian">
+              <div class="group-label" id="grp-pembelian">Pembelian</div>
+              <div class="fields">
+              <label class="field" data-field="variants">
+                <span class="label">Varian <span class="faint">opsional</span></span>
+                <input type="text" id="f-variants" placeholder="Hitam, XL" autocomplete="off" />
+                <span class="hint">Persis seperti tulisan tombol varian, pisahkan dengan koma.</span>
+                <span class="error"></span>
+              </label>
+              <label class="field" data-field="quantity">
+                <span class="label">Jumlah</span>
+                <input type="number" id="f-qty" min="1" max="99" value="1" />
+                <span class="error"></span>
+              </label>
+              <label class="field" data-field="maxPrice">
+                <span class="label">Harga maksimal</span>
+                <span class="affix"><span class="affix-text">Rp</span><input type="text" id="f-maxprice" inputmode="numeric" placeholder="150.000" autocomplete="off" /></span>
+                <span class="hint">Batal bila Total Pembayaran melebihi ini.</span>
+                <span class="error"></span>
+              </label>
+              <label class="field" data-field="payment">
+                <span class="label">Pembayaran <span class="faint">opsional</span></span>
+                <input type="text" id="f-payment" placeholder="Transfer Bank > Bank BCA" autocomplete="off" />
+                <span class="hint">Kosongkan untuk pakai default akun.</span>
+                <span class="error"></span>
+              </label>
+              </div>
+            </div>
+
+            <div class="group" role="group" aria-labelledby="grp-mode">
+              <div class="group-label" id="grp-mode">Mode</div>
+              <div class="fields">
+              <div class="segmented" role="radiogroup" aria-label="Mode">
+                <label>
+                  <input type="radio" name="mode" id="f-mode-test" value="test" checked />
+                  <span><i data-icon="flask"></i><b>Uji coba</b><small>Berhenti sebelum Buat Pesanan</small></span>
+                </label>
+                <label>
+                  <input type="radio" name="mode" id="f-mode-buy" value="buy" />
+                  <span><i data-icon="cart"></i><b>Beli sungguhan</b><small>Pesanan benar-benar dibuat</small></span>
+                </label>
+              </div>
+              </div>
+            </div>
+
+            <p class="summary" id="form-summary"></p>
+
+            <div class="form-actions">
+              <button type="submit" class="btn primary" id="btn-save-task">Simpan</button>
+              <button type="button" class="btn" id="btn-cancel-form-2">Batal</button>
+            </div>
+          </form>
+
+          <div id="task-list" class="list"></div>
+
+          <div id="empty" class="empty" hidden>
+            <h2>Belum ada task</h2>
+            <p class="muted">Tambahkan produk flash sale, lalu coba <b>Uji</b> untuk memastikan semua langkah berjalan di akunmu.</p>
+            <button class="btn primary" type="button" id="btn-add-empty"><i data-icon="plus"></i>Tambah task</button>
           </div>
+        </section>
 
-          <h2>Teks tombol di Shopee</h2>
-          <p class="muted small">
-            Bot mencari tombol berdasarkan teksnya. Kalau Shopee mengganti tulisan tombol, ubah di sini: satu teks per baris, huruf besar/kecil tidak berpengaruh.
-          </p>
-          <div class="grid" id="texts-grid"></div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn primary">Simpan</button>
-            <button type="button" class="btn" id="btn-reset-texts">Kembalikan teks bawaan</button>
+        <!-- ── Riwayat ────────────────────────────────────────────────────── -->
+        <section id="view-history" class="view" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Riwayat</h1>
+              <p class="muted">50 percobaan terakhir. Buka detail untuk melihat setiap langkah.</p>
+            </div>
+            <button type="button" class="btn" id="btn-clear-history"><i data-icon="trash"></i>Hapus riwayat</button>
+          </header>
+          <div id="history-list" class="list"></div>
+          <div id="history-empty" class="empty" hidden>
+            <h2>Belum ada riwayat</h2>
+            <p class="muted">Hasil setiap task dan uji coba muncul di sini.</p>
           </div>
-        </form>
-      </section>
+        </section>
 
-      <!-- ── Riwayat ──────────────────────────────────────────────────────── -->
-      <section id="view-history" class="view" role="tabpanel" hidden>
-        <div class="section-head">
-          <div>
-            <h1>Riwayat</h1>
-            <p class="muted small">50 percobaan terakhir beserta detail tiap langkah.</p>
+        <!-- ── Notifikasi ─────────────────────────────────────────────────── -->
+        <section id="view-notify" class="view" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Notifikasi</h1>
+              <p class="muted">Kabar ke Telegram saat bot siap, berhasil, atau gagal.</p>
+            </div>
+          </header>
+
+          <form id="notify-form" class="panel rows" novalidate>
+            <div class="row">
+              <div class="row-label">
+                <b>Telegram</b>
+                <span class="muted">Kirim pesan ke bot milikmu sendiri.</span>
+              </div>
+              <label class="switch"><input type="checkbox" id="n-enabled" aria-label="Aktifkan notifikasi Telegram" /><span></span></label>
+            </div>
+            <div class="row stacked">
+              <label class="row-label" for="n-token"><b>Token bot</b><span class="muted">Dari @BotFather.</span></label>
+              <span class="input-row">
+                <input type="password" id="n-token" autocomplete="off" spellcheck="false" placeholder="123456789:ABCdef…" />
+                <button type="button" class="btn icon-only" id="btn-show-token" aria-label="Lihat token"><i data-icon="eye"></i></button>
+              </span>
+            </div>
+            <div class="row stacked">
+              <label class="row-label" for="n-chat"><b>Chat ID</b><span class="muted">Kirim <code>/start</code> ke bot dulu, lalu deteksi.</span></label>
+              <span class="input-row">
+                <input type="text" id="n-chat" autocomplete="off" spellcheck="false" placeholder="123456789" class="mono" />
+                <button type="button" class="btn" id="btn-detect-chat"><i data-icon="search"></i>Deteksi</button>
+              </span>
+            </div>
+            <div class="row">
+              <div class="row-label">
+                <b>Kabari saat bot siap</b>
+                <span class="muted">Pesan saat tab produk dibuka menjelang flash sale.</span>
+              </div>
+              <label class="switch"><input type="checkbox" id="n-arm" aria-label="Kabari saat bot siap" /><span></span></label>
+            </div>
+            <div id="notify-error" class="note bad" hidden></div>
+            <div class="row-actions">
+              <button type="submit" class="btn primary">Simpan</button>
+              <button type="button" class="btn" id="btn-test-telegram"><i data-icon="send"></i>Kirim pesan tes</button>
+            </div>
+          </form>
+
+          <div class="prose">
+            <h2>Cara menyiapkan</h2>
+            <ol>
+              <li>Di Telegram buka <b>@BotFather</b>, kirim <code>/newbot</code>, ikuti langkahnya, salin token.</li>
+              <li>Tempel token di atas.</li>
+              <li>Buka bot baru itu dan kirim <code>/start</code>.</li>
+              <li>Klik <b>Deteksi</b>, aktifkan Telegram, lalu <b>Simpan</b> dan <b>Kirim pesan tes</b>.</li>
+            </ol>
           </div>
-          <button type="button" class="btn" id="btn-clear-history">Hapus riwayat</button>
-        </div>
-        <div id="history-list" class="stack"></div>
-        <div id="history-empty" class="card empty" hidden>
-          <h2>Belum ada riwayat</h2>
-          <p class="muted">Hasil setiap task dan uji coba akan muncul di sini.</p>
-        </div>
-      </section>
+        </section>
 
-      <!-- ── Panduan ──────────────────────────────────────────────────────── -->
-      <section id="view-help" class="view" role="tabpanel" hidden>
-        <div class="section-head">
-          <div><h1>Panduan</h1></div>
-        </div>
-        <div class="card help-card">
-          <h2>Cara kerja</h2>
-          <ol>
-            <li>Beberapa saat sebelum flash sale (bawaan 60 detik), FlashBot membuka tab halaman produk.</li>
-            <li>Tepat saat flash sale dimulai (mengikuti jam server Shopee), halaman dimuat ulang.</li>
-            <li>Bot memilih varian, mengatur jumlah, lalu klik <b>Beli Sekarang</b> → <b>Checkout</b>.</li>
-            <li>Di halaman checkout, bot memilih metode pembayaran (jika diisi), memeriksa <b>harga maksimal</b>, lalu klik <b>Buat Pesanan</b>.</li>
-            <li>Kamu tinggal menyelesaikan pembayaran seperti biasa.</li>
-          </ol>
-          <p class="muted small">Semua berjalan di browser dan akun Shopee kamu sendiri, persis seperti kamu mengklik manual. Tidak ada password atau cookie yang dikirim ke mana pun.</p>
-        </div>
+        <!-- ── Lanjutan ───────────────────────────────────────────────────── -->
+        <section id="view-advanced" class="view" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Lanjutan</h1>
+              <p class="muted">Nilai bawaan sudah cocok untuk kebanyakan orang.</p>
+            </div>
+          </header>
 
-        <div class="card help-card">
-          <h2>Persiapan sebelum flash sale</h2>
-          <ul>
-            <li><b>Login Shopee</b> di Chrome ini dan pastikan <b>alamat utama</b> sudah benar.</li>
-            <li>Tambahkan task, lalu klik <b>Uji sekarang</b>. Bot menjalankan semua langkah dan berhenti sebelum “Buat Pesanan”. Cek hasilnya di tab Riwayat.</li>
-            <li>Isi <b>Harga maksimal</b> supaya tidak pernah terbeli di harga normal.</li>
-            <li>Kalau uji coba berhasil, edit task dan <b>matikan Mode uji coba</b>.</li>
-            <li>Biarkan komputer menyala (jangan sleep) dan Chrome terbuka sampai flash sale selesai.</li>
-            <li>Kosongkan pilihan lain di keranjang supaya yang di-checkout hanya produk target.</li>
-          </ul>
-        </div>
+          <form id="advanced-form" novalidate>
+            <div class="panel rows">
+              <h2 class="rows-title">Waktu</h2>
+              <div class="row">
+                <div class="row-label">
+                  <b>Sinkron jam server Shopee</b>
+                  <span class="muted" id="time-result"></span>
+                </div>
+                <span class="row-control">
+                  <button type="button" class="btn sm" id="btn-check-time"><i data-icon="refresh" data-size="14"></i>Cek</button>
+                  <label class="switch"><input type="checkbox" id="a-timesync" aria-label="Sinkron jam server Shopee" /><span></span></label>
+                </span>
+              </div>
+              <div class="row">
+                <label class="row-label" for="a-lead"><b>Buka tab produk</b><span class="muted">Detik sebelum mulai. Waktu untuk login atau captcha.</span></label>
+                <span class="unit"><input type="number" id="a-lead" min="5" max="900" /><span>detik</span></span>
+              </div>
+              <div class="row">
+                <label class="row-label" for="a-delay"><b>Jeda muat ulang</b><span class="muted">Setelah T=0, agar server sempat berganti ke harga flash sale.</span></label>
+                <span class="unit"><input type="number" id="a-delay" min="0" max="5000" step="50" /><span>ms</span></span>
+              </div>
+              <div class="row">
+                <label class="row-label" for="a-reloads"><b>Maksimal muat ulang</b><span class="muted">Bila tombol belum muncul atau flash sale belum dimulai.</span></label>
+                <span class="unit"><input type="number" id="a-reloads" min="0" max="10" /><span>kali</span></span>
+              </div>
+              <div class="row">
+                <label class="row-label" for="a-timeout"><b>Batas tunggu per langkah</b><span class="muted">Sebelum langkah dianggap gagal.</span></label>
+                <span class="unit"><input type="number" id="a-timeout" min="3" max="60" /><span>detik</span></span>
+              </div>
+            </div>
 
-        <div class="card help-card">
-          <h2>Kalau gagal</h2>
-          <ul>
-            <li><b>“Varian tidak ditemukan”</b>: samakan tulisan varian dengan tombol di halaman produk. Pesan error menampilkan pilihan yang terlihat.</li>
-            <li><b>“Tombol … tidak ditemukan”</b>: Shopee mungkin mengganti tulisan tombol. Perbarui di tab <b>Lanjutan › Teks tombol</b>.</li>
-            <li><b>“Shopee meminta login/verifikasi”</b>: selesaikan manual. FlashBot tidak akan melewati captcha atau verifikasi.</li>
-            <li><b>“Flash sale belum dimulai”</b>: cek kembali jam flash sale di task.</li>
-          </ul>
-        </div>
+            <div class="panel rows">
+              <h2 class="rows-title">Teks tombol di Shopee</h2>
+              <p class="muted rows-desc">Bot mencari tombol berdasarkan tulisannya. Kalau Shopee mengganti tulisan, ubah di sini. Satu teks per baris.</p>
+              <div class="texts" id="texts-grid"></div>
+            </div>
 
-        <div class="card help-card disclaimer">
-          <h2>Penting</h2>
-          <p>FlashBot adalah alat bantu otomatisasi di browser dan <b>tidak berafiliasi dengan Shopee</b>. Penggunaan alat otomatis dapat bertentangan dengan Syarat &amp; Ketentuan Shopee dan berisiko pada akunmu; gunakan dengan bijak dan tanggung jawab sendiri. Keberhasilan membeli tidak dijamin karena stok flash sale sangat terbatas.</p>
-        </div>
-      </section>
-    </main>
+            <div class="row-actions">
+              <button type="submit" class="btn primary">Simpan</button>
+              <button type="button" class="btn" id="btn-reset-texts">Kembalikan teks bawaan</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- ── Panduan ────────────────────────────────────────────────────── -->
+        <section id="view-help" class="view" hidden>
+          <header class="page-head">
+            <div><h1>Panduan</h1></div>
+          </header>
+          <div class="prose">
+            <h2>Cara kerja</h2>
+            <ol>
+              <li>Menjelang flash sale (bawaan 60 detik), FlashBot membuka tab halaman produk.</li>
+              <li>Tepat saat dimulai menurut jam server Shopee, halaman dimuat ulang.</li>
+              <li>Bot memilih varian, mengatur jumlah, lalu klik <b>Beli Sekarang</b> dan <b>Checkout</b>.</li>
+              <li>Di checkout, bot memilih pembayaran, memeriksa harga maksimal, lalu klik <b>Buat Pesanan</b>.</li>
+              <li>Kamu tinggal menyelesaikan pembayaran.</li>
+            </ol>
+            <p class="muted">Semua berjalan di browser dan akun Shopee kamu sendiri, seperti mengklik manual. Tidak ada password atau cookie yang dikirim ke mana pun.</p>
+
+            <h2>Sebelum flash sale</h2>
+            <ul>
+              <li>Login Shopee di Chrome ini dan pastikan alamat utama benar.</li>
+              <li>Tambahkan task, lalu klik <b>Uji</b>. Cek hasilnya di Riwayat.</li>
+              <li>Isi harga maksimal supaya tidak terbeli di harga normal.</li>
+              <li>Kalau uji berhasil, edit task dan pilih mode <b>Beli sungguhan</b>.</li>
+              <li>Biarkan komputer menyala dan Chrome terbuka.</li>
+              <li>Kosongkan item lain yang tercentang di keranjang.</li>
+            </ul>
+
+            <h2>Kalau gagal</h2>
+            <ul>
+              <li><b>Varian tidak ditemukan:</b> samakan dengan tulisan tombol varian. Pesan error menampilkan pilihan yang terlihat.</li>
+              <li><b>Tombol tidak ditemukan:</b> tulisan tombol Shopee berubah. Perbarui di Lanjutan › Teks tombol.</li>
+              <li><b>Diminta login atau verifikasi:</b> selesaikan manual. FlashBot tidak melewati captcha.</li>
+              <li><b>Flash sale belum dimulai:</b> periksa jam di task.</li>
+            </ul>
+
+            <h2>Open source</h2>
+            <p>FlashBot gratis dengan lisensi MIT. Kode, rilis terbaru, dan laporan masalah ada di
+              <a href="https://github.com/Auto-runs/Shopee-FlashBot" target="_blank" rel="noopener">github.com/Auto-runs/Shopee-FlashBot</a>.
+              Kalau gagal, klik <b>Salin laporan</b> di Riwayat lalu tempel di issue baru.</p>
+
+            <p class="note warn"><i data-icon="alert"></i><span>FlashBot tidak berafiliasi dengan Shopee. Alat otomatis dapat bertentangan dengan Syarat &amp; Ketentuan Shopee dan berisiko pada akun. Gunakan dengan tanggung jawab sendiri. Keberhasilan membeli tidak dijamin.</span></p>
+          </div>
+        </section>
+      </main>
+    </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
 
     <script src="../lib/core.js"></script>
+    <script src="../ui/icons.js"></script>
+    <script src="../ui/ui.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

@@ -466,6 +466,40 @@
     ].join('\n');
   }
 
+  /**
+   * Laporan teks (Markdown) satu run untuk ditempel ke GitHub Issue.
+   * Tidak memuat token Telegram, cookie, atau query string link produk.
+   */
+  function buildRunReport(run, meta) {
+    const m = meta || {};
+    const st = describeStatus(run.status);
+    const parsed = parseProductUrl(run.task && run.task.url ? run.task.url : '');
+    const url = parsed.ok ? parsed.url.split('?')[0] : '-';
+    const start = run.startedAt || (run.steps && run.steps.length ? run.steps[0].at : 0);
+    const mode = run.kind === 'test' ? 'uji sekarang' : run.dryRun ? 'terjadwal, uji coba' : 'terjadwal, beli sungguhan';
+    const lines = [
+      '**Status:** ' + st.label + (run.message ? ' — ' + run.message : ''),
+      '**Mode:** ' + mode,
+      '**Produk:** ' + url,
+    ];
+    if (run.task) {
+      lines.push(
+        '**Varian:** ' + (run.task.variants && run.task.variants.length ? run.task.variants.join(', ') : '-') +
+          ' · **Jumlah:** ' + (run.task.quantity || 1) +
+          ' · **Pembayaran:** ' + (run.task.payment || 'default') +
+          ' · **Harga maks:** ' + (run.task.maxPrice ? formatRupiah(run.task.maxPrice) : '-'),
+      );
+    }
+    lines.push('**Versi extension:** ' + (m.version || '-') + ' · **Browser:** ' + (m.browser || '-'));
+    lines.push('', '```');
+    for (const step of run.steps || []) {
+      const rel = Math.max(0, step.at - start);
+      lines.push('+' + String(rel).padStart(6, ' ') + ' ms  ' + step.msg);
+    }
+    lines.push('```');
+    return lines.join('\n');
+  }
+
   function telegramErrorHint(description) {
     const d = String(description || '').toLowerCase();
     if (d.includes('unauthorized')) return 'Token bot salah.';
@@ -562,6 +596,7 @@
     describeStatus,
     buildRunMessage,
     buildArmMessage,
+    buildRunReport,
     telegramErrorHint,
     sendTelegram,
     detectTelegramChat,

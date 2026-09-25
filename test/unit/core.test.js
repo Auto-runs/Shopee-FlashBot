@@ -255,3 +255,35 @@ test('detectTelegramChat: ambil chat terbaru', async () => {
   const empty = fakeFetch(() => ({ body: { ok: true, result: [] } }));
   assert.match((await FB.detectTelegramChat(empty, 'T')).error, /\/start/);
 });
+
+test('buildRunReport: langkah relatif, tanpa query string & rahasia', () => {
+  const report = FB.buildRunReport(
+    {
+      status: 'failed',
+      message: 'Varian "XL" tidak ditemukan.',
+      kind: 'scheduled',
+      dryRun: false,
+      startedAt: 1000,
+      task: {
+        url: 'https://shopee.co.id/Kaos-i.1.2?sp_atk=RAHASIA',
+        variants: ['XL'],
+        quantity: 2,
+        payment: '',
+        maxPrice: 150000,
+      },
+      steps: [
+        { at: 1000, msg: 'Tab produk dibuka' },
+        { at: 1250, msg: 'Halaman produk termuat' },
+      ],
+    },
+    { version: '1.0.0', browser: 'Chrome 140 · Win32' },
+  );
+  assert.match(report, /\*\*Status:\*\* Gagal — Varian "XL" tidak ditemukan\./);
+  assert.match(report, /\*\*Mode:\*\* terjadwal, beli sungguhan/);
+  assert.match(report, /https:\/\/shopee\.co\.id\/Kaos-i\.1\.2\n/);
+  assert.doesNotMatch(report, /RAHASIA/);
+  assert.match(report, /Harga maks:\*\* Rp150\.000/);
+  assert.match(report, /\+ {5}0 ms {2}Tab produk dibuka/);
+  assert.match(report, /\+ {3}250 ms {2}Halaman produk termuat/);
+  assert.match(report, /Chrome 140/);
+});

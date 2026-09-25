@@ -33,7 +33,7 @@ test('halaman pengaturan: tambah, validasi, edit, nonaktifkan, hapus task', asyn
     await page.click('#btn-add');
     await page.fill('#f-url', 'https://tokopedia.com/abc');
     await page.click('#btn-save-task');
-    assert.match(await page.textContent('[data-field="url"] .field-error'), /shopee\.co\.id/);
+    assert.match(await page.textContent('[data-field="url"] .error'), /shopee\.co\.id/);
 
     // Tambah task valid
     const p = b.mock.addProduct({ name: 'Jaket Keren' });
@@ -44,16 +44,21 @@ test('halaman pengaturan: tambah, validasi, edit, nonaktifkan, hapus task', asyn
     await page.fill('#f-qty', '2');
     await page.fill('#f-maxprice', '175000');
     await page.fill('#f-payment', 'ShopeePay');
+    await page.locator('#f-maxprice').blur();
+    const summary = await page.textContent('#form-summary');
+    assert.match(summary, /Uji 2× Jaket Keren \(Hitam, L\)/);
+    assert.match(summary, /bayar dengan ShopeePay, batal bila total lebih dari Rp175\.000/);
     await shot(page, '1-form-task');
     await page.click('#btn-save-task');
     await page.waitForSelector('article.task');
     const card = await page.textContent('article.task');
     assert.match(card, /Jaket Keren/);
-    assert.match(card, /Terjadwal/);
-    assert.match(card, /Varian: Hitam, L/);
-    assert.match(card, /Maks Rp175\.000/);
-    assert.match(card, /Mode uji coba/);
+    assert.match(card, /Hitam, L · 2 pcs · ShopeePay · maks Rp175\.000/);
+    assert.match(card, /Uji coba/);
     assert.match(card, /21:00:00/);
+    await page.waitForFunction(() => /^\d\d:\d\d:\d\d$/.test(document.querySelector('#hero .hero-count').textContent));
+    assert.match(await page.textContent('#hero'), /Berikutnya.*Jaket Keren/s);
+    assert.equal(await page.textContent('#nav-count'), '1');
 
     let s = await b.state();
     assert.equal(s.tasks.length, 1);
@@ -62,9 +67,11 @@ test('halaman pengaturan: tambah, validasi, edit, nonaktifkan, hapus task', asyn
     assert.equal(s.tasks[0].dryRun, true);
 
     // Edit: matikan uji coba (dialog konfirmasi diterima otomatis)
-    await page.click('article.task button:has-text("Edit")');
+    await page.click('article.task button[aria-label="Edit"]');
     assert.equal(await page.inputValue('#f-qty'), '2');
-    await page.uncheck('#f-dryrun');
+    assert.equal(await page.isChecked('#f-mode-test'), true);
+    await page.check('#f-mode-buy');
+    assert.match(await page.textContent('#form-summary'), /Pesanan akan benar-benar dibuat/);
     await page.click('#btn-save-task');
     await page.waitForSelector('article.task:has-text("Beli sungguhan")');
     s = await b.state();
@@ -78,7 +85,7 @@ test('halaman pengaturan: tambah, validasi, edit, nonaktifkan, hapus task', asyn
     assert.equal(s.tasks[0].enabled, false);
 
     // Hapus
-    await page.click('article.task button:has-text("Hapus")');
+    await page.click('article.task button[aria-label="Hapus"]');
     await page.waitForSelector('#empty', { state: 'visible' });
     s = await b.state();
     assert.equal(s.tasks.length, 0);
@@ -93,10 +100,12 @@ test('notifikasi: deteksi chat ID, simpan, kirim tes, token salah', async () => 
   const b = await launch();
   try {
     const page = await openOptions(b, 'notify');
+    assert.equal(await page.isVisible('#notify-error'), false, 'kotak error tidak tampil bila tidak ada error');
     await page.fill('#n-token', 'GOOD:TOKEN');
     await page.click('#btn-detect-chat');
     await page.waitForFunction(() => document.querySelector('#n-chat').value === '555');
-    await page.check('#n-enabled');
+    await page.click('label.switch:has(#n-enabled) span');
+    assert.equal(await page.isChecked('#n-enabled'), true);
     await page.click('#notify-form button[type="submit"]');
     await page.waitForSelector('#toast.show.good');
     const s = await b.state();
@@ -152,15 +161,26 @@ test('riwayat & popup menampilkan hasil dan jadwal', async () => {
     const task = await b.addTask({ url: p.url, variants: 'Hitam', saleTime: later, maxPrice: 400000 });
 
     const page = await openOptions(b, 'tasks');
-    await page.click('article.task button:has-text("Uji sekarang")');
+    await page.click('article.task button:has-text("Uji")');
     await b.waitForRun(task.id);
-    await page.click('.tab[data-view="history"]');
+    await page.click('.nav-item[data-view="history"]');
     await page.waitForSelector('.history-item');
     const item = await page.textContent('.history-item');
     assert.match(item, /Uji coba berhasil/);
     assert.match(item, /Tas Ransel/);
     await page.click('.history-item summary');
     assert.ok((await page.$$('.steps li')).length >= 5, 'detail langkah tercatat');
+    await page.evaluate(() => {
+      navigator.clipboard.writeText = async (text) => {
+        window.__copied = text;
+      };
+    });
+    await page.click('.history-item button:has-text("Salin laporan")');
+    await page.waitForSelector('#toast.show.good');
+    const report = await page.evaluate(() => window.__copied);
+    assert.match(report, /\*\*Status:\*\* Uji coba berhasil/);
+    assert.match(report, /\*\*Versi extension:\*\* 1\.0\.0/);
+    assert.match(report, /ms {2}Klik "Beli Sekarang"/);
     await shot(page, '5-riwayat');
 
     const popup = await b.context.newPage();
@@ -170,8 +190,46 @@ test('riwayat & popup menampilkan hasil dan jadwal', async () => {
     const text = await popup.textContent('body');
     assert.match(text, /Tas Ransel/);
     assert.match(text, /Hasil terakhir/);
-    await popup.waitForFunction(() => /\d\d:\d\d:\d\d/.test(document.querySelector('#upcoming .countdown').textContent));
+    await popup.waitForFunction(() => /^\d\d:\d\d:\d\d$/.test(document.querySelector('#main .hero-count').textContent));
     await shot(popup, '6-popup');
+    assert.deepEqual(b.errors, []);
+  } finally {
+    await b.close();
+  }
+});
+
+test('saat berjalan: progres langkah, mode gelap, overlay di halaman Shopee', async () => {
+  const b = await launch();
+  try {
+    await b.settings({ leadSeconds: 60 });
+    const saleTime = b.mock.serverNow() + 45000;
+    const p = b.mock.addProduct({ name: 'Sneakers Putih', saleTime, variants: [{ name: '42' }] });
+    await b.addTask({ url: p.url, variants: '42', saleTime, dryRun: false, maxPrice: 250000, payment: 'ShopeePay' });
+    const later = b.mock.serverNow() + 5 * 3600e3;
+    const p2 = b.mock.addProduct({ name: 'Powerbank 10000mAh', saleTime: later });
+    await b.addTask({ url: p2.url, saleTime: later, maxPrice: 120000 });
+    await b.waitFor(async () => Object.values((await b.state()).active).some((r) => r.phase === 'armed'));
+
+    // Overlay hitung mundur di tab Shopee
+    const shop = b.context.pages().find((pg) => pg.url().includes('shopee.co.id'));
+    await shop.setViewportSize({ width: 1000, height: 560 });
+    await shop.waitForSelector('[data-flashbot="overlay"]');
+    await shop.waitForTimeout(600);
+    await shot(shop, '7-overlay');
+
+    for (const scheme of ['light', 'dark']) {
+      const page = await b.context.newPage();
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.setViewportSize({ width: 1100, height: 640 });
+      await page.goto(`chrome-extension://${b.extId}/src/options/options.html#tasks`);
+      await page.waitForSelector('body[data-ready="true"]');
+      assert.match(await page.textContent('#hero'), /Sedang berjalan.*Sneakers Putih/is);
+      assert.equal(await page.textContent('#hero .stepper [aria-current="step"]'), 'Menunggu T=0');
+      await page.waitForFunction(() => /^00:\d\d$/.test(document.querySelector('#hero .hero-count').textContent));
+      assert.equal(await page.isDisabled('article.task[data-task] >> nth=0 >> button:has-text("Uji")'), true, 'task berjalan tidak bisa diuji ulang');
+      await shot(page, `8-berjalan-${scheme}`);
+      await page.close();
+    }
     assert.deepEqual(b.errors, []);
   } finally {
     await b.close();

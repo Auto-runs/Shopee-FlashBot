@@ -1,0 +1,39 @@
+name: Release
+
+# Buat tag sesuai versi di extension/manifest.json, mis.:
+#   git tag v1.0.0 && git push origin v1.0.0
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cek versi tag = versi manifest
+        run: |
+          MANIFEST=$(node -p "require('./extension/manifest.json').version")
+          if [ "v$MANIFEST" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME tidak sama dengan versi manifest v$MANIFEST"; exit 1
+          fi
+      - run: npx playwright install --with-deps chromium
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:e2e
+      - run: npm run pack
+      - name: Terbitkan GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES=$(awk "/^## \\[${GITHUB_REF_NAME#v}\\]/{f=1;next} /^## \\[/{f=0} f" CHANGELOG.md)
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --title "FlashBot $GITHUB_REF_NAME" --notes "${NOTES:-Lihat CHANGELOG.md}"

@@ -1,5 +1,6 @@
 'use strict';
 
+const { h } = FB.ui;
 const $ = (sel, root) => (root || document).querySelector(sel);
 const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
@@ -13,36 +14,19 @@ const state = {
 };
 
 const TEXT_FIELDS = [
-  ['buyNow', 'Tombol “Beli Sekarang”'],
-  ['cartCheckout', 'Tombol “Checkout” di keranjang'],
-  ['placeOrder', 'Tombol “Buat Pesanan”'],
+  ['buyNow', 'Beli Sekarang'],
+  ['cartCheckout', 'Checkout (keranjang)'],
+  ['placeOrder', 'Buat Pesanan'],
   ['totalLabel', 'Label total pembayaran'],
   ['quantityLabel', 'Label kolom jumlah'],
-  ['soldOut', 'Teks stok habis (boleh kosong)'],
-  ['notStarted', 'Teks flash sale belum mulai (boleh kosong)'],
+  ['soldOut', 'Stok habis (boleh kosong)'],
+  ['notStarted', 'Flash sale belum mulai (boleh kosong)'],
 ];
 
 const QUICK_HOURS = [0, 9, 12, 15, 18, 20, 21, 22];
+const ISSUE_URL = 'https://github.com/Auto-runs/Shopee-FlashBot/issues/new?template=bug_report.yml';
 
 // ── Util ──────────────────────────────────────────────────────────────────────
-
-/** Buat elemen DOM tanpa innerHTML (aman dari data pengguna). */
-function h(tag, attrs, ...children) {
-  const el = document.createElement(tag);
-  for (const [key, value] of Object.entries(attrs || {})) {
-    if (value == null || value === false) continue;
-    if (key === 'class') el.className = value;
-    else if (key === 'text') el.textContent = value;
-    else if (key.startsWith('on') && typeof value === 'function') el.addEventListener(key.slice(2), value);
-    else if (key === 'dataset') Object.assign(el.dataset, value);
-    else el.setAttribute(key, value === true ? '' : String(value));
-  }
-  for (const child of children.flat()) {
-    if (child == null || child === false) continue;
-    el.append(child instanceof Node ? child : document.createTextNode(String(child)));
-  }
-  return el;
-}
 
 async function send(type, data) {
   try {
@@ -56,148 +40,161 @@ async function send(type, data) {
 let toastTimer = null;
 function toast(message, tone) {
   const el = $('#toast');
-  el.textContent = message;
+  el.replaceChildren(FB.icon(tone === 'bad' ? 'fail' : 'check', 15), h('span', { text: message }));
   el.className = 'show' + (tone ? ' ' + tone : '');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (el.className = ''), 3800);
 }
 
-function serverNow() {
-  const sync = state.timeSync;
-  return Date.now() + (sync && sync.source === 'shopee' ? sync.offsetMs : 0);
-}
-
-function statusChip(status) {
-  const st = FB.describeStatus(status);
-  return h('span', { class: 'chip ' + st.tone }, st.icon + ' ' + st.label);
-}
+const serverNow = () => FB.ui.serverNow(state.timeSync);
 
 function timeZoneLabel() {
   const offset = -new Date().getTimezoneOffset() / 60;
   const names = { 7: 'WIB', 8: 'WITA', 9: 'WIT' };
-  const sign = offset >= 0 ? '+' : '-';
-  return 'GMT' + sign + Math.abs(offset) + (names[offset] ? ' (' + names[offset] + ')' : '');
-}
-
-function formatClock(ms) {
-  const d = new Date(ms);
-  const p = (n, w) => String(n).padStart(w || 2, '0');
-  return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + p(d.getMilliseconds(), 3);
+  return names[offset] || 'GMT' + (offset >= 0 ? '+' : '-') + Math.abs(offset);
 }
 
 function activeRunForTask(taskId) {
   return Object.values(state.active).find((r) => r.taskId === taskId) || null;
 }
 
-// ── Navigasi tab ──────────────────────────────────────────────────────────────
+function iconButton(icon, label, onclick, opts) {
+  return h(
+    'button',
+    { class: 'btn sm icon-only ' + ((opts && opts.cls) || 'quiet'), type: 'button', 'aria-label': label, title: label, disabled: opts && opts.disabled, onclick },
+    FB.icon(icon, 15),
+  );
+}
+
+// ── Navigasi ──────────────────────────────────────────────────────────────────
+
+const VIEWS = ['tasks', 'history', 'notify', 'advanced', 'help'];
 
 function showView(name) {
-  const views = ['tasks', 'notify', 'advanced', 'history', 'help'];
-  if (!views.includes(name)) name = 'tasks';
-  for (const v of views) $('#view-' + v).hidden = v !== name;
-  for (const tab of $$('.tab')) tab.setAttribute('aria-selected', String(tab.dataset.view === name));
+  if (!VIEWS.includes(name)) name = 'tasks';
+  for (const v of VIEWS) $('#view-' + v).hidden = v !== name;
+  for (const item of $$('.nav-item')) {
+    if (item.dataset.view === name) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
+  }
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
 }
 
-// ── Render: run aktif, peringatan, task ───────────────────────────────────────
+// ── Hero: sedang berjalan / berikutnya ────────────────────────────────────────
 
-function renderActiveRuns() {
-  const box = $('#active-runs');
-  box.replaceChildren();
-  for (const run of Object.values(state.active)) {
-    const last = run.steps && run.steps.length ? run.steps[run.steps.length - 1].msg : '';
-    const phase = FB.PHASE_LABELS[run.phase] || run.phase;
-    box.append(
+function runHero(run) {
+  const armed = run.phase === 'armed';
+  return h(
+    'section',
+    { class: 'panel hero live', dataset: { run: run.id } },
+    h(
+      'div',
+      {},
+      h('div', { class: 'hero-label' }, h('span', { class: 'dot live' }), run.kind === 'test' ? 'Uji sekarang berjalan' : 'Sedang berjalan'),
+      armed
+        ? h('div', { class: 'hero-count', dataset: { countdown: run.saleTime, done: '00:00' } })
+        : null,
+      h('div', { class: 'hero-name', text: run.taskName }),
+    ),
+    h(
+      'div',
+      { class: 'hero-side' },
       h(
-        'div',
-        { class: 'card run-banner', dataset: { run: run.id } },
-        h(
-          'div',
-          { class: 'run-info' },
-          h(
-            'div',
-            { class: 'run-title' },
-            h('span', { class: 'pulse', 'aria-hidden': 'true' }),
-            (run.kind === 'test' ? 'Uji sekarang: ' : 'Berjalan: ') + run.taskName,
-          ),
-          h(
-            'div',
-            { class: 'run-step' },
-            phase,
-            run.phase === 'armed'
-              ? h('span', { class: 'mono', dataset: { countdown: run.saleTime } })
-              : null,
-            last ? ' · ' + last : '',
-          ),
-        ),
-        h('button', {
-          class: 'btn sm',
+        'button',
+        {
+          class: 'btn',
           type: 'button',
-          text: 'Batalkan',
           onclick: async () => {
             const res = await send('ui:cancelRun', { runId: run.id });
             if (!res.ok) toast(res.error || 'Gagal membatalkan.', 'bad');
           },
-        }),
+        },
+        FB.icon('stop', 14),
+        'Batalkan',
       ),
-    );
+    ),
+    FB.ui.stepper(run.phase),
+    h('div', { class: 'hero-step', text: FB.ui.lastStep(run) }),
+  );
+}
+
+function nextHero(task) {
+  return h(
+    'section',
+    { class: 'panel hero' },
+    h(
+      'div',
+      {},
+      h('div', { class: 'hero-label' }, FB.icon('timer', 14), 'Berikutnya'),
+      h('div', { class: 'hero-count', dataset: { countdown: task.saleTime } }),
+      h('div', { class: 'hero-name', text: task.name }),
+      h('div', { class: 'hero-sub' }, h('time', { text: FB.ui.dayLabel(task.saleTime) + ' ' + FB.ui.clock(task.saleTime) }), FB.ui.modeTag(task)),
+    ),
+    h(
+      'div',
+      { class: 'hero-side' },
+      h('button', { class: 'btn', type: 'button', onclick: () => testTask(task) }, FB.icon('play', 14), 'Uji sekarang'),
+    ),
+  );
+}
+
+function renderHero() {
+  const box = $('#hero');
+  box.replaceChildren();
+  const runs = Object.values(state.active);
+  if (runs.length) {
+    for (const run of runs) box.append(runHero(run));
+    return;
   }
+  const busy = new Set(runs.map((r) => r.taskId));
+  const next = state.tasks
+    .filter((t) => t.enabled && !busy.has(t.id) && t.saleTime > serverNow())
+    .sort((a, b) => a.saleTime - b.saleTime)[0];
+  if (next) box.append(nextHero(next));
 }
 
 function renderWarnings() {
   const box = $('#warnings');
   box.replaceChildren();
   const tg = state.settings.telegram;
-  const enabledTasks = state.tasks.filter((t) => t.enabled);
-  if (enabledTasks.length && !(tg.enabled && tg.botToken && tg.chatId)) {
+  if (state.tasks.some((t) => t.enabled) && !(tg.enabled && tg.botToken && tg.chatId)) {
     box.append(
       h(
         'div',
-        { class: 'callout info' },
-        'Tips: aktifkan ',
-        h('a', { href: '#notify', text: 'notifikasi Telegram', onclick: () => showView('notify') }),
-        ' supaya tahu hasilnya walaupun tidak di depan komputer.',
+        { class: 'note' },
+        FB.icon('bell', 15),
+        h('span', {}, 'Aktifkan ', h('a', { href: '#notify', text: 'notifikasi Telegram', onclick: () => showView('notify') }), ' supaya tahu hasilnya walau tidak di depan komputer.'),
       ),
     );
   }
   for (const [a, b] of FB.findCloseTasks(state.tasks)) {
     box.append(
-      h(
-        'div',
-        { class: 'callout warn' },
-        '“' + a.name + '” dan “' + b.name + '” berjadwal berdekatan. Keduanya tetap dijalankan di tab terpisah, tapi koneksi & komputer akan lebih sibuk.',
-      ),
+      h('div', { class: 'note warn' }, FB.icon('alert', 15), h('span', { text: '“' + a.name + '” dan “' + b.name + '” berjadwal berdekatan. Keduanya tetap jalan di tab terpisah, tapi komputer dan koneksi lebih sibuk.' })),
     );
   }
   if (state.lastNotifyError) {
-    box.append(h('div', { class: 'callout bad' }, 'Notifikasi Telegram terakhir gagal: ' + state.lastNotifyError.error));
+    box.append(h('div', { class: 'note bad' }, FB.icon('fail', 15), h('span', { text: 'Notifikasi Telegram terakhir gagal: ' + state.lastNotifyError.error })));
   }
 }
 
-function taskStatusChip(task, run) {
-  if (run) {
-    return h('span', { class: 'chip accent' }, h('span', { class: 'pulse', 'aria-hidden': 'true' }), run.kind === 'test' ? 'Uji berjalan' : 'Berjalan');
-  }
-  if (task.enabled) return h('span', { class: 'chip info', text: 'Terjadwal' });
-  return h('span', { class: 'chip', text: 'Nonaktif' });
+// ── Daftar task ───────────────────────────────────────────────────────────────
+
+function taskMeta(task) {
+  const parts = [];
+  if (task.variants.length) parts.push(task.variants.join(', '));
+  parts.push(task.quantity + ' pcs');
+  parts.push(task.payment || 'pembayaran default');
+  const meta = h('div', { class: 'task-meta' }, parts.join(' · ') + ' · ');
+  meta.append(task.maxPrice ? 'maks ' + FB.formatRupiah(task.maxPrice) : h('span', { class: 'warn', text: 'tanpa harga maksimal' }));
+  return meta;
 }
 
-function taskCard(task) {
+function taskRow(task) {
   const run = activeRunForTask(task.id);
-  const meta = [];
-  if (task.variants.length) meta.push(h('span', { class: 'chip', text: 'Varian: ' + task.variants.join(', ') }));
-  meta.push(h('span', { class: 'chip', text: 'Jumlah ' + task.quantity }));
-  if (task.payment) meta.push(h('span', { class: 'chip', text: 'Bayar: ' + task.payment }));
-  meta.push(
-    task.maxPrice
-      ? h('span', { class: 'chip', text: 'Maks ' + FB.formatRupiah(task.maxPrice) })
-      : h('span', { class: 'chip warn', text: 'Tanpa harga maksimal' }),
-  );
-  meta.push(
-    task.dryRun
-      ? h('span', { class: 'chip info', text: '🧪 Mode uji coba' })
-      : h('span', { class: 'chip accent', text: '🛒 Beli sungguhan' }),
-  );
+  const title = h('div', { class: 'task-title' }, h('span', { class: 'task-name', text: task.name }));
+  if (run) title.append(h('span', { class: 'tag live' }, h('span', { class: 'dot' }), 'Berjalan'));
+  else if (!task.enabled) title.append(h('span', { class: 'tag', text: 'Nonaktif' }));
+  title.append(FB.ui.modeTag(task));
 
   let last = null;
   if (task.lastRun) {
@@ -205,15 +202,14 @@ function taskCard(task) {
     last = h(
       'div',
       { class: 'task-last' },
-      'Terakhir' + (task.lastRun.kind === 'test' ? ' (uji sekarang)' : '') + ': ' + st.icon + ' ' + st.label,
-      task.lastRun.message ? ' — ' + task.lastRun.message : '',
-      ' · ' + FB.formatDateTime(task.lastRun.at),
+      FB.ui.statusIcon(task.lastRun.status, 14),
+      h('span', {}, st.label + (task.lastRun.kind === 'test' ? ' (uji)' : '') + (task.lastRun.message ? ': ' + task.lastRun.message : '')),
     );
   }
 
   const toggle = h('input', {
     type: 'checkbox',
-    'aria-label': 'Aktifkan jadwal',
+    'aria-label': 'Jadwal aktif',
     onchange: async (e) => {
       const res = await send('ui:toggleTask', { id: task.id, enabled: e.target.checked });
       if (!res.ok) {
@@ -225,47 +221,31 @@ function taskCard(task) {
   toggle.checked = task.enabled;
   toggle.disabled = Boolean(run);
 
+  const upcoming = task.enabled && task.saleTime > serverNow();
   return h(
     'article',
-    { class: 'card task' + (task.enabled ? '' : ' disabled'), dataset: { task: task.id } },
+    { class: 'task' + (task.enabled ? '' : ' disabled'), dataset: { task: task.id } },
     h(
       'div',
-      { class: 'task-main' },
-      h('div', { class: 'task-title' }, taskStatusChip(task, run), h('h3', { text: task.name })),
-      h('a', { class: 'task-url', href: task.url, target: '_blank', rel: 'noopener', text: task.url }),
-      h(
-        'div',
-        { class: 'task-time' },
-        '🕒 ' + FB.formatDateTime(task.saleTime),
-        task.enabled || run ? h('span', { class: 'countdown', dataset: { countdown: task.saleTime } }) : null,
-      ),
-      h('div', { class: 'task-meta' }, meta),
+      { class: 'task-when' },
+      h('span', { class: 'day', text: FB.ui.dayLabel(task.saleTime) }),
+      h('time', { text: FB.ui.clock(task.saleTime), title: FB.formatDateTime(task.saleTime) }),
+      upcoming ? h('span', { class: 'countdown', dataset: { countdown: task.saleTime, prefix: '−' } }) : null,
+    ),
+    h(
+      'div',
+      { class: 'task-body' },
+      title,
+      taskMeta(task),
       last,
     ),
     h(
       'div',
-      { class: 'task-side' },
-      h('label', { class: 'toggle-row' }, h('span', { text: 'Jadwal aktif' }), h('span', { class: 'switch' }, toggle, h('span'))),
-      h(
-        'div',
-        { class: 'task-actions' },
-        h('button', {
-          class: 'btn sm',
-          type: 'button',
-          text: 'Uji sekarang',
-          title: 'Jalankan semua langkah sekarang tanpa membuat pesanan',
-          disabled: Boolean(run),
-          onclick: () => testTask(task),
-        }),
-        h('button', { class: 'btn sm', type: 'button', text: 'Edit', disabled: Boolean(run), onclick: () => openForm(task) }),
-        h('button', {
-          class: 'btn sm danger',
-          type: 'button',
-          text: 'Hapus',
-          disabled: Boolean(run),
-          onclick: () => deleteTask(task),
-        }),
-      ),
+      { class: 'task-controls' },
+      h('label', { class: 'switch', title: 'Jadwal aktif' }, toggle, h('span')),
+      h('button', { class: 'btn sm', type: 'button', disabled: Boolean(run), title: 'Jalankan semua langkah sekarang tanpa membuat pesanan', onclick: () => testTask(task) }, FB.icon('play', 13), 'Uji'),
+      iconButton('edit', 'Edit', () => openForm(task), { disabled: Boolean(run) }),
+      iconButton('trash', 'Hapus', () => deleteTask(task), { disabled: Boolean(run), cls: 'quiet danger' }),
     ),
   );
 }
@@ -276,56 +256,92 @@ function renderTasks() {
   const tasks = state.tasks
     .slice()
     .sort((a, b) => Number(b.enabled) - Number(a.enabled) || (a.saleTime || 0) - (b.saleTime || 0));
-  for (const task of tasks) list.append(taskCard(task));
+  for (const task of tasks) list.append(taskRow(task));
   $('#empty').hidden = tasks.length > 0 || !$('#task-form').hidden;
+
+  const enabled = state.tasks.filter((t) => t.enabled).length;
+  $('#nav-count').textContent = enabled ? String(enabled) : '';
+  $('#tasks-summary').textContent = state.tasks.length
+    ? enabled + ' terjadwal dari ' + state.tasks.length + ' task.'
+    : 'Produk yang dibeli otomatis saat flash sale dimulai.';
+}
+
+// ── Riwayat ───────────────────────────────────────────────────────────────────
+
+function historyItem(run) {
+  const st = FB.describeStatus(run.status);
+  const kind = run.kind === 'test' ? 'Uji sekarang' : run.dryRun ? 'Terjadwal · uji coba' : 'Terjadwal';
+  const start = run.startedAt || (run.steps && run.steps[0] ? run.steps[0].at : 0);
+  const steps = (run.steps || []).map((s) =>
+    h('li', {}, h('time', { text: '+' + Math.max(0, s.at - start) + ' ms', title: FB.ui.clock(s.at) }), h('span', { text: s.msg })),
+  );
+  const failed = run.status !== 'success' && run.status !== 'dry_run_ok';
+  return h(
+    'article',
+    { class: 'history-item' },
+    h(
+      'div',
+      { class: 'history-head' },
+      FB.ui.statusIcon(run.status, 16),
+      h(
+        'div',
+        {},
+        h('div', { class: 'history-title' }, h('strong', { text: run.taskName }), h('span', { class: 'tag', text: kind })),
+        h('div', { class: 'history-msg' }, st.label + (run.message ? ' — ' + run.message : ''), Number.isFinite(run.total) ? ' · Total ' + FB.formatRupiah(run.total) : ''),
+      ),
+      h('time', { class: 'history-time', text: FB.ui.dayLabel(run.finishedAt || run.startedAt) + ' ' + FB.ui.clock(run.finishedAt || run.startedAt) }),
+    ),
+    h(
+      'div',
+      { class: 'history-body' },
+      run.notifyError ? h('div', { class: 'tone-bad', text: 'Notifikasi gagal: ' + run.notifyError }) : null,
+      steps.length ? h('details', {}, h('summary', {}, FB.icon('chevron', 14), 'Detail langkah (' + steps.length + ')'), h('ol', { class: 'steps' }, steps)) : null,
+      h(
+        'div',
+        { class: 'history-actions' },
+        h('button', { class: 'btn sm', type: 'button', onclick: () => copyReport(run) }, FB.icon('copy', 13), 'Salin laporan'),
+        failed ? h('a', { class: 'btn sm quiet', href: ISSUE_URL, target: '_blank', rel: 'noopener' }, FB.icon('external', 13), 'Laporkan masalah') : null,
+      ),
+    ),
+  );
 }
 
 function renderHistory() {
   const list = $('#history-list');
-  list.replaceChildren();
-  for (const run of state.runs) {
-    const kind =
-      run.kind === 'test'
-        ? h('span', { class: 'chip', text: 'Uji sekarang' })
-        : run.dryRun
-          ? h('span', { class: 'chip', text: 'Terjadwal · uji coba' })
-          : h('span', { class: 'chip', text: 'Terjadwal' });
-    const steps = (run.steps || []).map((s) => h('li', {}, h('time', { text: formatClock(s.at) }), h('span', { text: s.msg })));
-    list.append(
-      h(
-        'article',
-        { class: 'card history-item' },
-        h('div', { class: 'history-head' }, statusChip(run.status), h('strong', { text: run.taskName }), kind),
-        h(
-          'div',
-          { class: 'history-msg' },
-          run.message || '',
-          Number.isFinite(run.total) ? ' · Total ' + FB.formatRupiah(run.total) : '',
-        ),
-        h('div', { class: 'muted small' }, FB.formatDateTime(run.finishedAt || run.startedAt)),
-        run.notifyError ? h('div', { class: 'small', style: 'color:var(--bad)' }, 'Notifikasi gagal: ' + run.notifyError) : null,
-        steps.length ? h('details', {}, h('summary', { text: 'Detail langkah (' + steps.length + ')' }), h('ol', { class: 'steps' }, steps)) : null,
-      ),
-    );
-  }
+  list.replaceChildren(...state.runs.map(historyItem));
   $('#history-empty').hidden = state.runs.length > 0;
+  $('#btn-clear-history').hidden = state.runs.length === 0;
 }
 
+function browserLabel() {
+  const m = navigator.userAgent.match(/Chrome\/(\d+)/);
+  return (m ? 'Chrome ' + m[1] : 'Chromium') + ' · ' + (navigator.platform || '-');
+}
+
+async function copyReport(run) {
+  const text = FB.buildRunReport(run, { version: chrome.runtime.getManifest().version, browser: browserLabel() });
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Laporan disalin. Tempel di GitHub Issue.', 'good');
+  } catch (_) {
+    toast('Gagal menyalin ke clipboard.', 'bad');
+  }
+}
+
+// ── Render umum ───────────────────────────────────────────────────────────────
+
 function renderAll() {
-  renderActiveRuns();
+  renderHero();
   renderWarnings();
   renderTasks();
   renderHistory();
-  tickCountdowns();
+  tick();
 }
 
-function tickCountdowns() {
+function tick() {
   const now = serverNow();
-  for (const el of $$('[data-countdown]')) {
-    const target = Number(el.dataset.countdown);
-    const left = target - now;
-    el.textContent = left > 0 ? ' · ' + FB.formatDuration(left) + ' lagi' : ' · dimulai';
-  }
+  FB.ui.tickCountdowns(now);
+  $('#server-clock').textContent = FB.ui.clock(now);
 }
 
 // ── Form task ─────────────────────────────────────────────────────────────────
@@ -334,7 +350,7 @@ function setFieldErrors(errors) {
   for (const field of $$('#task-form [data-field]')) {
     const msg = (errors && errors[field.dataset.field]) || '';
     field.classList.toggle('invalid', Boolean(msg));
-    $('.field-error', field).textContent = msg;
+    $('.error', field).textContent = msg;
   }
 }
 
@@ -345,27 +361,58 @@ function nextOccurrence(hour) {
   return d.getTime();
 }
 
+function isDryRun() {
+  return !$('#f-mode-buy').checked;
+}
+
 function updateUrlPreview() {
   const value = $('#f-url').value.trim();
   const preview = $('#url-preview');
+  preview.classList.remove('ok');
   if (!value) {
     preview.textContent = 'Salin dari address bar saat membuka halaman produk.';
     return;
   }
   const parsed = FB.parseProductUrl(value);
-  preview.textContent = parsed.ok
-    ? '✓ Produk: ' + (FB.productNameFromUrl(parsed.url) || 'ID ' + parsed.itemId)
-    : parsed.error;
-}
-
-function updateDryRunStyle() {
-  $('.dryrun-box').classList.toggle('off', !$('#f-dryrun').checked);
+  preview.textContent = parsed.ok ? 'Produk: ' + (FB.productNameFromUrl(parsed.url) || 'ID ' + parsed.itemId) : parsed.error;
+  preview.classList.toggle('ok', parsed.ok);
 }
 
 function formatPriceInput() {
   const input = $('#f-maxprice');
   const digits = input.value.replace(/[^\d]/g, '');
   input.value = digits ? FB.formatRupiah(Number(digits)).replace('Rp', '') : '';
+}
+
+/** Kalimat ringkasan "apa yang akan dilakukan bot" di bawah form. */
+function updateSummary() {
+  const out = $('#form-summary');
+  const parsed = FB.parseProductUrl($('#f-url').value);
+  const time = FB.fromDatetimeLocal($('#f-time').value);
+  if (!parsed.ok || time == null) {
+    out.textContent = '';
+    return;
+  }
+  const name = $('#f-name').value.trim() || FB.productNameFromUrl(parsed.url) || 'produk ini';
+  const qty = Math.max(1, parseInt($('#f-qty').value, 10) || 1);
+  const variants = FB.splitList($('#f-variants').value, ',');
+  const payment = FB.splitList($('#f-payment').value, '>').join(' › ');
+  const max = Number($('#f-maxprice').value.replace(/[^\d]/g, ''));
+  const b = (text) => h('b', { text });
+
+  out.replaceChildren(
+    isDryRun() ? 'Uji ' : 'Beli ',
+    b(qty + '× ' + name),
+    variants.length ? ' (' + variants.join(', ') + ')' : '',
+    ' pada ',
+    b(FB.formatDateTime(time)),
+    payment ? ', bayar dengan ' : ', pembayaran default',
+    payment ? b(payment) : '',
+    max ? ', batal bila total lebih dari ' : '. Tanpa batas harga.',
+    max ? b(FB.formatRupiah(max)) : '',
+    max ? '.' : '',
+    isDryRun() ? ' Berhenti sebelum Buat Pesanan.' : ' Pesanan akan benar-benar dibuat.',
+  );
 }
 
 function openForm(task) {
@@ -381,11 +428,11 @@ function openForm(task) {
   $('#f-payment').value = task ? task.payment : '';
   $('#f-maxprice').value = task && task.maxPrice ? String(task.maxPrice) : '';
   formatPriceInput();
-  $('#f-dryrun').checked = task ? task.dryRun : true;
+  $(task && !task.dryRun ? '#f-mode-buy' : '#f-mode-test').checked = true;
   const time = task && task.saleTime > Date.now() ? task.saleTime : nextOccurrence(12);
   $('#f-time').value = FB.toDatetimeLocal(time);
   updateUrlPreview();
-  updateDryRunStyle();
+  updateSummary();
   form.hidden = false;
   $('#empty').hidden = true;
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -408,7 +455,7 @@ async function submitTask(e) {
     saleTime: FB.fromDatetimeLocal($('#f-time').value),
     payment: $('#f-payment').value,
     maxPrice: $('#f-maxprice').value,
-    dryRun: $('#f-dryrun').checked,
+    dryRun: isDryRun(),
     enabled: true,
   };
   if (input.saleTime == null) input.saleTime = $('#f-time').value;
@@ -420,8 +467,8 @@ async function submitTask(e) {
   }
   if (!input.dryRun) {
     const ok = confirm(
-      'Mode uji coba MATI.\n\nBot akan BENAR-BENAR membuat pesanan saat flash sale dimulai. ' +
-        'Pastikan sudah mencoba “Uji sekarang” dan harga maksimal sudah diisi.\n\nLanjutkan?',
+      'Mode Beli sungguhan.\n\nBot akan BENAR-BENAR membuat pesanan saat flash sale dimulai. ' +
+        'Pastikan sudah mencoba “Uji” dan harga maksimal sudah diisi.\n\nLanjutkan?',
     );
     if (!ok) return;
   }
@@ -435,13 +482,13 @@ async function submitTask(e) {
     return;
   }
   closeForm();
-  toast('Task disimpan. Bot akan berjalan otomatis ' + FB.formatDateTime(res.task.saleTime) + '.', 'good');
+  toast('Tersimpan. Berjalan otomatis ' + FB.formatDateTime(res.task.saleTime) + '.', 'good');
 }
 
 async function testTask(task) {
   const res = await send('ui:testTask', { id: task.id });
-  if (res.ok) toast('Uji coba dimulai di tab baru — pesanan tidak akan dibuat.', 'good');
-  else toast(res.error || 'Gagal memulai uji coba.', 'bad');
+  if (res.ok) toast('Uji dimulai di tab baru. Pesanan tidak akan dibuat.', 'good');
+  else toast(res.error || 'Gagal memulai uji.', 'bad');
 }
 
 async function deleteTask(task) {
@@ -483,7 +530,7 @@ async function saveNotify(e) {
     return;
   }
   const res = await send('ui:saveSettings', { settings: { telegram, notifyOnArm: $('#n-arm').checked } });
-  if (res.ok) toast('Pengaturan notifikasi disimpan.', 'good');
+  if (res.ok) toast('Notifikasi disimpan.', 'good');
   else toast(res.error || 'Gagal menyimpan.', 'bad');
 }
 
@@ -492,7 +539,7 @@ async function testTelegram() {
   btn.disabled = true;
   const res = await send('ui:testTelegram', { telegram: notifyFormValues() });
   btn.disabled = false;
-  if (res.ok) toast('Pesan tes terkirim — cek Telegram kamu.', 'good');
+  if (res.ok) toast('Pesan tes terkirim. Cek Telegram kamu.', 'good');
   else toast(res.error || 'Gagal mengirim.', 'bad');
 }
 
@@ -509,21 +556,23 @@ async function detectChat() {
   }
 }
 
+function toggleToken() {
+  const input = $('#n-token');
+  const btn = $('#btn-show-token');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btn.replaceChildren(FB.icon(show ? 'eyeOff' : 'eye', 16));
+  btn.setAttribute('aria-label', show ? 'Sembunyikan token' : 'Lihat token');
+}
+
 // ── Lanjutan ──────────────────────────────────────────────────────────────────
 
 function buildTextFields() {
-  const grid = $('#texts-grid');
-  grid.replaceChildren();
-  for (const [key, label] of TEXT_FIELDS) {
-    grid.append(
-      h(
-        'label',
-        { class: 'field' },
-        h('span', { class: 'field-label', text: label }),
-        h('textarea', { id: 't-' + key, rows: 3, spellcheck: 'false' }),
-      ),
-    );
-  }
+  $('#texts-grid').replaceChildren(
+    ...TEXT_FIELDS.map(([key, label]) =>
+      h('label', { class: 'field' }, h('span', { class: 'label', text: label }), h('textarea', { id: 't-' + key, rows: 3, spellcheck: 'false' })),
+    ),
+  );
 }
 
 function fillAdvancedForm() {
@@ -533,14 +582,19 @@ function fillAdvancedForm() {
   $('#a-reloads').value = s.maxReloads;
   $('#a-timeout').value = Math.round(s.stepTimeoutMs / 1000);
   $('#a-timesync').checked = s.timeSync;
-  for (const [key] of TEXT_FIELDS) $('#t-' + key).value = (s.texts[key] || []).join('\n');
+  for (const [key] of TEXT_FIELDS) {
+    const lines = s.texts[key] || [];
+    const area = $('#t-' + key);
+    area.value = lines.join('\n');
+    area.rows = Math.max(3, lines.length + 1);
+  }
   renderTimeSync();
 }
 
 function renderTimeSync(text) {
   const sync = state.timeSync;
   $('#time-result').textContent =
-    text || (sync ? FB.describeOffset(sync) + ' Dicek ' + FB.formatDateTime(sync.at) + '.' : '');
+    text || (sync ? FB.describeOffset(sync) + ' Dicek ' + FB.formatDateTime(sync.at) + '.' : 'Bot memakai jam server, jadi jam komputer yang meleset tidak masalah.');
 }
 
 async function saveAdvanced(e) {
@@ -601,7 +655,7 @@ function applyStorage(data) {
 }
 
 function bindEvents() {
-  for (const tab of $$('.tab')) tab.addEventListener('click', () => showView(tab.dataset.view));
+  for (const item of $$('.nav-item')) item.addEventListener('click', () => showView(item.dataset.view));
   window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
 
   $('#btn-add').addEventListener('click', () => openForm(null));
@@ -614,32 +668,31 @@ function bindEvents() {
     const field = e.target.closest('[data-field]');
     if (field && field.classList.contains('invalid')) {
       field.classList.remove('invalid');
-      $('.field-error', field).textContent = '';
+      $('.error', field).textContent = '';
     }
+    updateSummary();
   });
-  $('#f-dryrun').addEventListener('change', updateDryRunStyle);
+  $('#task-form').addEventListener('change', updateSummary);
   $('#f-maxprice').addEventListener('blur', formatPriceInput);
 
-  $('#tz-hint').textContent = 'Zona waktu komputer: ' + timeZoneLabel();
-  const quick = $('#quick-times');
-  for (const hour of QUICK_HOURS) {
-    quick.append(
+  $('#tz-hint').textContent = timeZoneLabel();
+  $('#quick-times').replaceChildren(
+    ...QUICK_HOURS.map((hour) =>
       h('button', {
         type: 'button',
         text: String(hour).padStart(2, '0') + ':00',
-        onclick: () => ($('#f-time').value = FB.toDatetimeLocal(nextOccurrence(hour))),
+        onclick: () => {
+          $('#f-time').value = FB.toDatetimeLocal(nextOccurrence(hour));
+          updateSummary();
+        },
       }),
-    );
-  }
+    ),
+  );
 
   $('#notify-form').addEventListener('submit', saveNotify);
   $('#btn-test-telegram').addEventListener('click', testTelegram);
   $('#btn-detect-chat').addEventListener('click', detectChat);
-  $('#btn-show-token').addEventListener('click', () => {
-    const input = $('#n-token');
-    input.type = input.type === 'password' ? 'text' : 'password';
-    $('#btn-show-token').textContent = input.type === 'password' ? 'Lihat' : 'Sembunyikan';
-  });
+  $('#btn-show-token').addEventListener('click', toggleToken);
 
   $('#advanced-form').addEventListener('submit', saveAdvanced);
   $('#btn-reset-texts').addEventListener('click', resetTexts);
@@ -652,7 +705,8 @@ function bindEvents() {
 }
 
 async function init() {
-  $('#version').textContent = 'Versi ' + chrome.runtime.getManifest().version;
+  FB.hydrateIcons();
+  $('#version').textContent = 'v' + chrome.runtime.getManifest().version;
   buildTextFields();
   bindEvents();
   showView(location.hash.slice(1));
@@ -671,7 +725,7 @@ async function init() {
     if ('lastNotifyError' in data) renderNotifyError();
     if ('timeSync' in data) renderTimeSync();
   });
-  setInterval(tickCountdowns, 500);
+  setInterval(tick, 250);
   document.body.dataset.ready = 'true';
 }
 
