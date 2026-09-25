@@ -14,8 +14,8 @@ function executablePath() {
   return custom && existsSync(custom) ? custom : undefined;
 }
 
-export async function launch({ skewMs = 0 } = {}) {
-  const mock = await new MockShopee({ skewMs }).start();
+export async function launch({ skewMs = 0, headDelayMs = 0 } = {}) {
+  const mock = await new MockShopee({ skewMs, headDelayMs }).start();
   const context = await chromium.launchPersistentContext('', {
     channel: 'chromium',
     headless: true,

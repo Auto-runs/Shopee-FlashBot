@@ -212,7 +212,7 @@
     const res = await send({ type: 'retryReload', runId: ctx.run.id, reason });
     if (!res || !res.allowed) return false;
     showOverlay(reason + ' — muat ulang (' + res.reloads + '/' + res.max + ')', 'warn');
-    await ctx.sleep(700);
+    await ctx.sleep(250);
     location.reload();
     return true;
   }
@@ -239,7 +239,7 @@
       if (ctx.run.kind === 'test') {
         ctx.log('Info: halaman menampilkan "' + notStarted + '" (wajar saat uji sekarang).');
       } else {
-        const gone = await ctx.wait(() => !dom.pageHasText(document, texts.notStarted), 2500);
+        const gone = await ctx.wait(() => !dom.pageHasText(document, texts.notStarted), 1000);
         if (!gone) {
           if (await retryReload(ctx, 'Flash sale belum dimulai ("' + notStarted + '")')) return;
           return ctx.finish(

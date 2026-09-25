@@ -276,7 +276,9 @@ async function startRun(taskId, kind) {
   try {
     clearArm(taskId);
     const sync = S.settings.timeSync ? await syncTime(false) : { offsetMs: 0, source: 'off' };
-    const offsetMs = sync.offsetMs || 0;
+    // Pakai batas bawah perkiraan selisih jam: lebih baik terlambat beberapa ms
+    // daripada memuat ulang sebelum flash sale benar-benar dimulai.
+    const offsetMs = (sync.offsetMs || 0) - (sync.source === 'shopee' ? sync.errorMs || 0 : 0);
     const isTest = kind === 'test';
     const saleTime = isTest ? Date.now() + offsetMs : task.saleTime;
     const late = !isTest && Date.now() + offsetMs >= saleTime + S.settings.reloadDelayMs;
@@ -511,6 +513,7 @@ async function handleUi(msg) {
       else S.tasks.push(task);
       persist();
       reconcileTask(existing || task);
+      // Sinkron jam di latar belakang; jadwal dihitung ulang bila selisihnya berubah.
       refreshTimeSync(10 * 60 * 1000);
       return { ok: true, task: existing || task };
     }
@@ -532,6 +535,7 @@ async function handleUi(msg) {
       task.updatedAt = Date.now();
       persist();
       reconcileTask(task);
+      if (task.enabled) refreshTimeSync(10 * 60 * 1000);
       return { ok: true };
     }
     case 'ui:testTask':

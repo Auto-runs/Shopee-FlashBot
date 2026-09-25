@@ -131,7 +131,11 @@ test('lanjutan: cek jam server & simpan teks tombol', async () => {
     const page = await openOptions(b, 'advanced');
     await page.click('#btn-check-time');
     await page.waitForFunction(() => /tersinkron/.test(document.querySelector('#time-result').textContent));
-    assert.match(await page.textContent('#time-result'), /lebih lambat 1\.\d+ detik/);
+    // Selisih yang ditampilkan harus mendekati 1,5 detik, dalam batas akurasi yang dilaporkan.
+    const shown = await page.textContent('#time-result');
+    const acc = Number(shown.match(/akurasi ±(\d+) ms/)[1]);
+    const secs = Number(shown.match(/lebih lambat ([\d.]+) detik/)[1]);
+    assert.ok(Math.abs(secs * 1000 - 1500) <= acc + 20, shown);
 
     await page.fill('#t-buyNow', 'Beli Sekarang\nBeli Langsung');
     await page.fill('#a-lead', '90');
