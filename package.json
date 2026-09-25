@@ -1,0 +1,25 @@
+{
+  "name": "flashbot-checkout",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chrome extension untuk checkout otomatis flash sale Shopee Indonesia.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test \"test/unit/*.test.js\"",
+    "test:e2e": "node --test --test-concurrency=1 \"test/e2e/*.test.mjs\"",
+    "test:all": "npm test && npm run test:e2e",
+    "lint": "eslint extension scripts test",
+    "icons": "node scripts/make-icons.mjs",
+    "pack": "node scripts/pack.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.1.0",
+    "globals": "^17.12.0",
+    "jsdom": "^26.1.0",
+    "playwright": "1.56.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

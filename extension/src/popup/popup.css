@@ -1,0 +1,103 @@
+body {
+  width: 340px;
+  padding: 12px;
+}
+
+body > * + * {
+  margin-top: 12px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+}
+
+.brand img {
+  border-radius: 5px;
+}
+
+.label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list:empty {
+  display: none;
+}
+
+.item {
+  padding: 10px 12px;
+}
+
+.item-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.item-title span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.item-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+.countdown {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.item.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.item.active .item-title {
+  color: var(--accent);
+}
+
+.item-actions {
+  margin-top: 8px;
+}
+
+.empty {
+  margin: 0;
+}
+
+.foot {
+  display: flex;
+  gap: 8px;
+}
+
+.foot .btn {
+  flex: 1;
+}

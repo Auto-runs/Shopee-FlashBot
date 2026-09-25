@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "FlashBot Checkout",
+  "short_name": "FlashBot",
+  "version": "1.0.0",
+  "description": "Checkout otomatis flash sale Shopee Indonesia tepat waktu, langsung dari browser kamu sendiri.",
+  "minimum_chrome_version": "116",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "https://shopee.co.id/*",
+    "https://*.shopee.co.id/*",
+    "https://api.telegram.org/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://shopee.co.id/*"],
+      "js": ["src/lib/core.js", "src/lib/dom.js", "src/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "FlashBot Checkout",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
