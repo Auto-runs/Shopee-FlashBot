@@ -28,6 +28,25 @@ langsung dari browser dan akun Shopee kamu sendiri.
 - 🔧 **Tahan perubahan tampilan Shopee.** Tombol dicari berdasarkan teksnya; teks bisa diubah dari halaman pengaturan tanpa update kode.
 - 🔒 **Aman:** tidak ada password atau cookie yang disalin atau dikirim ke mana pun. Semua berjalan di browser pengguna.
 
+## 🖼️ Tampilan
+
+<table>
+  <tr>
+    <td width="50%"><b>Daftar task</b><br/><img src="docs/screenshots/2-daftar-task.png" alt="Daftar task terjadwal dengan hitung mundur"/></td>
+    <td width="50%"><b>Tambah / edit task</b><br/><img src="docs/screenshots/1-form-task.png" alt="Form task: link produk, waktu, varian, jumlah, harga maksimal, pembayaran, mode uji coba"/></td>
+  </tr>
+  <tr>
+    <td><b>Riwayat & detail langkah</b><br/><img src="docs/screenshots/5-riwayat.png" alt="Riwayat percobaan dengan detail tiap langkah sampai milidetik"/></td>
+    <td><b>Notifikasi Telegram</b><br/><img src="docs/screenshots/3-notifikasi.png" alt="Pengaturan notifikasi Telegram dengan deteksi Chat ID otomatis"/></td>
+  </tr>
+  <tr>
+    <td><b>Pengaturan lanjutan</b><br/><img src="docs/screenshots/4-lanjutan.png" alt="Pengaturan waktu, sinkron jam server Shopee, dan teks tombol"/></td>
+    <td><b>Popup toolbar</b><br/><img src="docs/screenshots/6-popup.png" width="300" alt="Popup: jadwal berikutnya dan hasil terakhir"/></td>
+  </tr>
+</table>
+
+<sub>Tangkapan layar dibuat otomatis oleh test end-to-end: <code>FLASHBOT_SCREENSHOTS=docs/screenshots npm run test:e2e</code>.</sub>
+
 ## 📦 Cara pasang (untuk pengguna)
 
 1. Ekstrak file `flashbot-checkout-v1.0.0.zip` ke sebuah folder (jangan dihapus setelah dipasang).

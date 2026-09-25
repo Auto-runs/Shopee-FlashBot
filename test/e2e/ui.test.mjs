@@ -5,6 +5,15 @@ import { launch } from './harness.mjs';
 
 const SHOTS = process.env.FLASHBOT_SCREENSHOTS; // folder opsional untuk tangkapan layar
 
+/** Tangkapan layar untuk dokumentasi: dari atas halaman, tanpa toast. */
+async function shot(page, name) {
+  if (!SHOTS) return;
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForFunction(() => !document.querySelector('#toast.show'), null, { timeout: 6000 }).catch(() => {});
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
+}
+
 async function openOptions(b, hash = 'tasks') {
   const page = await b.context.newPage();
   page.on('dialog', (d) => d.accept());
@@ -35,7 +44,7 @@ test('halaman pengaturan: tambah, validasi, edit, nonaktifkan, hapus task', asyn
     await page.fill('#f-qty', '2');
     await page.fill('#f-maxprice', '175000');
     await page.fill('#f-payment', 'ShopeePay');
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/1-form-task.png`, fullPage: true });
+    await shot(page, '1-form-task');
     await page.click('#btn-save-task');
     await page.waitForSelector('article.task');
     const card = await page.textContent('article.task');
@@ -60,7 +69,7 @@ test('halaman pengaturan: tambah, validasi, edit, nonaktifkan, hapus task', asyn
     await page.waitForSelector('article.task:has-text("Beli sungguhan")');
     s = await b.state();
     assert.equal(s.tasks[0].dryRun, false);
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/2-daftar-task.png`, fullPage: true });
+    await shot(page, '2-daftar-task');
 
     // Nonaktifkan lewat saklar
     await page.click('article.task .switch span');
@@ -100,7 +109,7 @@ test('notifikasi: deteksi chat ID, simpan, kirim tes, token salah', async () => 
     await page.fill('#n-token', 'SALAH:TOKEN');
     await page.click('#btn-test-telegram');
     await page.waitForSelector('#toast.show.bad:has-text("Token bot salah")');
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/3-notifikasi.png`, fullPage: true });
+    await shot(page, '3-notifikasi');
     assert.deepEqual(b.errors, []);
   } finally {
     await b.close();
@@ -122,7 +131,7 @@ test('lanjutan: cek jam server & simpan teks tombol', async () => {
     let s = await b.state();
     assert.deepEqual(s.settings.texts.buyNow, ['beli sekarang', 'beli langsung']);
     assert.equal(s.settings.leadSeconds, 90);
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/4-lanjutan.png`, fullPage: true });
+    await shot(page, '4-lanjutan');
 
     await page.click('#btn-reset-texts');
     await page.waitForFunction(() => document.querySelector('#t-buyNow').value === 'beli sekarang\nbuy now');
@@ -152,7 +161,7 @@ test('riwayat & popup menampilkan hasil dan jadwal', async () => {
     assert.match(item, /Tas Ransel/);
     await page.click('.history-item summary');
     assert.ok((await page.$$('.steps li')).length >= 5, 'detail langkah tercatat');
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/5-riwayat.png`, fullPage: true });
+    await shot(page, '5-riwayat');
 
     const popup = await b.context.newPage();
     await popup.setViewportSize({ width: 364, height: 520 });
@@ -162,7 +171,7 @@ test('riwayat & popup menampilkan hasil dan jadwal', async () => {
     assert.match(text, /Tas Ransel/);
     assert.match(text, /Hasil terakhir/);
     await popup.waitForFunction(() => /\d\d:\d\d:\d\d/.test(document.querySelector('#upcoming .countdown').textContent));
-    if (SHOTS) await popup.screenshot({ path: `${SHOTS}/6-popup.png`, fullPage: true });
+    await shot(popup, '6-popup');
     assert.deepEqual(b.errors, []);
   } finally {
     await b.close();
