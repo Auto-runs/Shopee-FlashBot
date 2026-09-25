@@ -19,5 +19,5 @@ Rilis publik pertama.
 - Tampilan dengan hitung mundur, progres langkah, dan mode gelap.
 
 ### Diperbaiki
-- Jadwal kini dihitung setelah selisih jam server diketahui, dan waktu muat ulang memakai batas bawah perkiraan jam. Sebelumnya, di jaringan lambat bot bisa memuat ulang sedikit terlalu cepat lalu terlambat ±3,5 detik karena harus menunggu dan memuat ulang lagi.
+- Waktu muat ulang kini memakai batas bawah perkiraan jam server. Sebelumnya, di jaringan lambat bot bisa memuat ulang sedikit terlalu cepat lalu terlambat ±3,5 detik karena harus menunggu dan memuat ulang lagi.
 - Muat ulang ulang saat flash sale ternyata belum dimulai kini lebih cepat (±1 detik, sebelumnya ±3 detik).

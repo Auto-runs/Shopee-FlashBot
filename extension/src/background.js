@@ -512,9 +512,9 @@ async function handleUi(msg) {
       if (existing) Object.assign(existing, task);
       else S.tasks.push(task);
       persist();
-      // Jadwal dihitung dengan jam server; pastikan selisih jam sudah diketahui dulu.
-      await refreshTimeSync(10 * 60 * 1000);
       reconcileTask(existing || task);
+      // Sinkron jam di latar belakang; jadwal dihitung ulang bila selisihnya berubah.
+      refreshTimeSync(10 * 60 * 1000);
       return { ok: true, task: existing || task };
     }
     case 'ui:deleteTask': {
@@ -534,8 +534,8 @@ async function handleUi(msg) {
       task.enabled = Boolean(msg.enabled);
       task.updatedAt = Date.now();
       persist();
-      if (task.enabled) await refreshTimeSync(10 * 60 * 1000);
       reconcileTask(task);
+      if (task.enabled) refreshTimeSync(10 * 60 * 1000);
       return { ok: true };
     }
     case 'ui:testTask':
